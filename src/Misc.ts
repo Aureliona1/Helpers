@@ -7,7 +7,7 @@ import type { Vec4 } from "./Types.ts";
  * @param obj The object to clone.
  * @returns A new instance of the same object.
  */
-export function deepCopy<T>(obj: T): T {
+function deepCopy<T>(obj: T): T {
 	if (obj === null || typeof obj !== "object") {
 		return obj;
 	}
@@ -16,12 +16,10 @@ export function deepCopy<T>(obj: T): T {
 		return obj.map(item => deepCopy(item)) as T;
 	}
 
-	const copiedObj: Record<string, any> = {};
-	for (const key in obj) {
-		if (Object.prototype.hasOwnProperty.call(obj, key)) {
-			copiedObj[key] = deepCopy(obj[key]);
-		}
-	}
+	const copiedObj = Object.create(Object.getPrototypeOf(obj));
+	Object.keys(obj).forEach(key => {
+		(copiedObj as any)[key] = deepCopy((obj as any)[key]);
+	});
 
 	return copiedObj as T;
 }
