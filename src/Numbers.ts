@@ -3,8 +3,6 @@ import { ArrOp } from "./Arrays.ts";
 import { rgb } from "./Console.ts";
 import type { Vec2, Vec3 } from "./Types.ts";
 
-import mulberry32 from "@bengineering/mulberry32";
-
 /**
  * Recursively sets the precision of numbers in an object, array, or number.
  * @param o The object, or number to set the precision of.
@@ -33,6 +31,15 @@ export function stringCodeToNumber(s: string): number {
 		.split(/./)
 		.map(x => x.charCodeAt(0))
 		.reduce((x, y) => x + y);
+}
+
+function mulberry32(a: number): () => number {
+	return function (): number {
+		let t = (a += 0x6d2b79f5);
+		t = Math.imul(t ^ (t >>> 15), t | 1);
+		t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
+		return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+	};
 }
 
 /**
