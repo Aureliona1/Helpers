@@ -17,12 +17,12 @@ export function lerp(start: number, end: number, fraction: number, easing: Easin
  * Returns a function of a waveform with period 1 and amplitude 1.
  */
 export const waveform = {
-	sine: (x: number) => Math.sin(mapRange(x, [0, 1], [0, 2 * Math.PI])),
-	saw: (x: number) => (x % 1) * 2 - 1,
-	sawInverse: (x: number) => ((1 - x) % 1) * 2 - 1,
-	square: (x: number) => (x % 1 < 0.5 ? -1 : 1),
-	ease: (x: number, ease: Easing, amp = 1) => (x % 1 < 0.5 ? lerp(-amp, amp, (x % 1) * 2, ease) : lerp(amp, -amp, (x % 1) * 2 - 1, ease)),
-	triangle: (x: number) => 1 - Math.abs(0.5 - (x % 1)) * 4
+	sine: (x: number): number => Math.sin(mapRange(x, [0, 1], [0, 2 * Math.PI])),
+	saw: (x: number): number => (x % 1) * 2 - 1,
+	sawInverse: (x: number): number => ((1 - x) % 1) * 2 - 1,
+	square: (x: number): number => (x % 1 < 0.5 ? -1 : 1),
+	ease: (x: number, ease: Easing, amp = 1): number => (x % 1 < 0.5 ? lerp(-amp, amp, (x % 1) * 2, ease) : lerp(amp, -amp, (x % 1) * 2 - 1, ease)),
+	triangle: (x: number): number => 1 - Math.abs(0.5 - (x % 1)) * 4
 };
 
 /**

@@ -37,7 +37,7 @@ export function progressRepeat(rep: number, c: (i: number) => void, progressTime
  * @param defaultValue The value to return if the user doesn't enter anything (Default - "").
  * @returns string - User input.
  */
-export function regexInput(msg: string, pattern: RegExp, errorMsg = "Invalid input, please try again...", defaultValue = "") {
+export function regexInput(msg: string, pattern: RegExp, errorMsg = "Invalid input, please try again...", defaultValue = ""): string {
 	let input = "";
 	for (let i = 0; !pattern.test(input); i++) {
 		if (i !== 0) {
@@ -53,7 +53,7 @@ export function regexInput(msg: string, pattern: RegExp, errorMsg = "Invalid inp
  * @param args The arguments to parse.
  * @param expectedOptions The expected options format. For any boolean options, set them to false here, they can then be defined with flags. Any arguments not defined here will be ignored.
  */
-export function interpretArgs<T extends Record<string, string | boolean>>(args: string[] = [], expectedOptions: T) {
+export function interpretArgs<T extends Record<string, string | boolean>>(args: string[] = [], expectedOptions: T): T {
 	args.forEach((x, i, a) => {
 		if (expectedOptions[x] != undefined) {
 			// Check for boolean param, therefore this can be treated as a single arg
@@ -90,4 +90,4 @@ export function fpsRepeat(rep: number, fps: number, c: (i: number) => void) {
  * @param blue The blue value (0 - 255).
  * @param bg Whether to affect the foreground color or the background (Default - false).
  */
-export const rgb = (r: number, g: number, b: number, bg = false) => "\x1b[" + (bg ? 48 : 38) + ";2;" + (Math.round(r) % 256) + ";" + (Math.round(g) % 256) + ";" + (Math.round(b) % 256) + "m";
+export const rgb = (r: number, g: number, b: number, bg = false): string => "\x1b[" + (bg ? 48 : 38) + ";2;" + (Math.round(r) % 256) + ";" + (Math.round(g) % 256) + ";" + (Math.round(b) % 256) + "m";

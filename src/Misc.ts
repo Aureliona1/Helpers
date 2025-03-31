@@ -42,7 +42,7 @@ export function sleep(milliseconds: number) {
  * Convert hsva to rgba.
  * @param color The hsva color (linear values 0-1).
  */
-export function hsv2rgb(color: Vec4) {
+export function hsv2rgb(color: Vec4): Vec4 {
 	const [h, s, v, a] = color;
 	const f = (n: number, k = (n + h * 6) % 6) => v - v * s * Math.max(Math.min(k, 4 - k, 1), 0);
 	return [f(5), f(3), f(1), a] as Vec4;
@@ -52,7 +52,7 @@ export function hsv2rgb(color: Vec4) {
  * Convert rgba to hsva.
  * @param color The rgba color (linear rgb 0-1).
  */
-export function rgb2hsv(color: Vec4) {
+export function rgb2hsv(color: Vec4): Vec4 {
 	const max = Math.max(color[0], color[1], color[2]);
 	const min = Math.min(color[0], color[1], color[2]);
 	const delta = max - min;
@@ -65,7 +65,7 @@ export function rgb2hsv(color: Vec4) {
  * Convert byte value hsv to gamma rgb (all values are 0-255).
  * @param hsv Uint8Array of hsv (optional a) values. This will be mutated by the function.
  */
-export function byteHsvToRgb(hsv: Uint8Array) {
+export function byteHsvToRgb(hsv: Uint8Array): Uint8Array {
 	const h = hsv[0] / 255,
 		s = hsv[1] / 255,
 		v = hsv[2] / 255;
@@ -80,7 +80,7 @@ export function byteHsvToRgb(hsv: Uint8Array) {
  * Convert gamma rgb to byte value hsv (all values are 0-255).
  * @param rgb Uint8Array of rgb (optional a) values. This will be mutated by the function.
  */
-export function byteRgbToHsv(rgb: Uint8Array) {
+export function byteRgbToHsv(rgb: Uint8Array): Uint8Array {
 	const r = rgb[0] / 255,
 		g = rgb[1] / 255,
 		b = rgb[2] / 255;

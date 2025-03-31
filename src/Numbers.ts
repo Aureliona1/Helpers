@@ -140,7 +140,7 @@ export function msToTimeString(time: number): string {
 	return `${rgb(100, 150, 255) + h}h:${m}m:${s}.${ms.toString().padEnd(3, "0")}s\x1b[0m`;
 }
 
-export function bytesToString(bytes: number) {
+export function bytesToString(bytes: number): string {
 	bytes = Math.round(bytes);
 	return `${rgb(255, 255, 0)}${decimals(bytes / 1000000000, 3)}GB | ${decimals(bytes / 1000000, 3)}MB | ${bytes / 1000}KB\x1b[0m`;
 }

@@ -11,7 +11,7 @@ export type NumberArrLike = Uint16Array | Uint32Array | Uint8Array | Int16Array 
  * @param arr The arr to remove elements from.
  * @param indexes The indexes of the elements to remove.
  */
-export function arrRem<T extends any[]>(arr: T, indexes: number[]) {
+export function arrRem<T extends any[]>(arr: T, indexes: number[]): T {
 	for (let i = indexes.length - 1; i >= 0; i--) {
 		arr.splice(indexes[i], 1);
 	}
@@ -38,7 +38,7 @@ export class randArray {
 	 * Creates the arr based on set parameters.
 	 * @returns An arr of random values.
 	 */
-	run() {
+	run(): number[] {
 		return arrFromFunction(this.length, x => decimals(random(this.range[0], this.range[1], `${this.seed}blahblah${x}`), this.decimals));
 	}
 	/**
@@ -46,7 +46,7 @@ export class randArray {
 	 * @param buffer The number of times to try for a unique number (prevents infinite repeats under certain circumstances).
 	 * @returns An arr of random values.
 	 */
-	runUnique(buffer = this.length) {
+	runUnique(buffer = this.length): number[] {
 		const res: number[] = [];
 		for (let i = 0; i < this.length; i++) {
 			let unique = false,
@@ -70,7 +70,7 @@ export class randArray {
 	 * @param buffer The number of times to try for a unique number (prevents infinite repeats under certain circumstances).
 	 * @returns An arr of random values.
 	 */
-	runUniqueConsecutive(gap = 1, buffer = this.length) {
+	runUniqueConsecutive(gap = 1, buffer = this.length): number[] {
 		const res: number[] = [],
 			prev: number[] = [];
 		for (let i = 0; i < gap; i++) {
@@ -348,7 +348,7 @@ export function interleaveArrs<T>(arr1: ArrayLike<T>, arr2: ArrayLike<T>): T[] {
 /**
  * Concatenate 2 Uint8Arrays.
  */
-export function concatUint8(a: Uint8Array, b: Uint8Array) {
+export function concatUint8(a: Uint8Array, b: Uint8Array): Uint8Array {
 	const out = new Uint8Array(a.length + b.length);
 	out.set(a);
 	out.set(b, a.length);
