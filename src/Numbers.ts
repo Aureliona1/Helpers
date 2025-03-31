@@ -140,6 +140,9 @@ export function msToTimeString(time: number): string {
 	return `${rgb(100, 150, 255) + h}h:${m}m:${s}.${ms.toString().padEnd(3, "0")}s\x1b[0m`;
 }
 
+/**
+ * Generate a string that shows the number of GB, MB, KB from a number of bytes.
+ */
 export function bytesToString(bytes: number): string {
 	bytes = Math.round(bytes);
 	return `${rgb(255, 255, 0)}${decimals(bytes / 1000000000, 3)}GB | ${decimals(bytes / 1000000, 3)}MB | ${bytes / 1000}KB\x1b[0m`;
