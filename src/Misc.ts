@@ -3,24 +3,27 @@
 import type { Vec4 } from "./Types.ts";
 
 /**
- * Creates a new instance of an object, recursively.
- * @param obj Object to clone.
+ * Recursively create a new instance of an object and all nested objects.
+ * @param obj The object to clone.
+ * @returns A new instance of the same object.
  */
-export function copy<T>(obj: T): T {
+export function deepCopy<T>(obj: T): T {
 	if (obj === null || typeof obj !== "object") {
 		return obj;
 	}
 
-	const newObj = Array.isArray(obj) ? [] : {};
-	const keys = Object.getOwnPropertyNames(obj);
+	if (Array.isArray(obj)) {
+		return obj.map(item => deepCopy(item)) as T;
+	}
 
-	keys.forEach(x => {
-		const value = copy((obj as any)[x]);
-		(newObj as any)[x] = value;
-	});
+	const copiedObj: Record<string, any> = {};
+	for (const key in obj) {
+		if (Object.prototype.hasOwnProperty.call(obj, key)) {
+			copiedObj[key] = deepCopy(obj[key]);
+		}
+	}
 
-	Object.setPrototypeOf(newObj, obj as any);
-	return newObj as T;
+	return copiedObj as T;
 }
 
 /**
