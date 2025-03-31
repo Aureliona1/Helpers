@@ -7,7 +7,7 @@ import type { Vec4 } from "./Types.ts";
  * @param obj The object to clone.
  * @returns A new instance of the same object.
  */
-function deepCopy<T>(obj: T): T {
+export function deepCopy<T>(obj: T): T {
 	if (obj === null || typeof obj !== "object") {
 		return obj;
 	}
