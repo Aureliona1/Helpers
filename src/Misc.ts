@@ -1,6 +1,6 @@
 // deno-lint-ignore-file no-explicit-any
 
-import { Vec4 } from "./Types.ts";
+import type { Vec4 } from "./Types.ts";
 
 /**
  * Creates a new instance of an object, recursively.

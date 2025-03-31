@@ -1,0 +1,9 @@
+{
+  "imports": {
+    "@bengineering/mulberry32": "jsr:@bengineering/mulberry32@^0.0.1"
+  },
+  "name": "@aurellis/helpers",
+  "version": "1.0.0",
+  "license": "MIT",
+  "exports": "./mod.ts"
+}

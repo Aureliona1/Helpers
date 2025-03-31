@@ -1,6 +1,6 @@
 // deno-lint-ignore-file no-explicit-any
 import * as easings from "./Easings.ts";
-import { Easing, Vec2 } from "./Types.ts";
+import type { Easing, Vec2 } from "./Types.ts";
 
 /**
  * Interpolate between two numbers by a fraction, with optional easing.

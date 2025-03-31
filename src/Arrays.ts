@@ -2,7 +2,7 @@
 
 import { lerp } from "./Interpolation.ts";
 import { decimals, random } from "./Numbers.ts";
-import { Easing } from "./Types.ts";
+import type { Easing } from "./Types.ts";
 
 export type NumberArrLike = Uint16Array | Uint32Array | Uint8Array | Int16Array | Int32Array | Int8Array | Float16Array | Float32Array | Float64Array | Array<number>;
 
