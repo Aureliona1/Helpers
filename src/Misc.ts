@@ -122,7 +122,9 @@ export function ensureFile(path: string) {
 	path = path.replaceAll("\\", "/");
 	let dir = path.split("/");
 	dir = dir.slice(0, dir.length - 1);
-	ensureDir(dir.join("/") + "/");
+	if (dir.length) {
+		ensureDir(dir.join("/") + "/");
+	}
 	try {
 		Deno.statSync(path);
 	} catch (_) {
