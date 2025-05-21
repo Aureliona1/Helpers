@@ -6,16 +6,23 @@ export class Cache {
 		try {
 			ensureFile(this.fileName);
 		} catch (e) {
-			console.error("Error ensure cache file, check your read and write permissions...");
+			console.error("Error ensuring cache file, check your read and write permissions...");
 			console.error(e);
 		}
 	}
 	private readFile(): Record<string, any> {
 		this.ensureFile();
+		let raw = "{}";
 		try {
-			return JSON.parse(Deno.readTextFileSync(this.fileName));
+			raw = Deno.readTextFileSync(this.fileName);
 		} catch (e) {
 			console.error("Error reading cache, check your read permissions...");
+			console.error(e);
+		}
+		try {
+			return JSON.parse(raw);
+		} catch (e) {
+			console.error("Error parsing cache contents, consider clearing the cache and trying again...");
 			console.error(e);
 		}
 		return {};
@@ -29,7 +36,7 @@ export class Cache {
 	 * Read the value at a name in the cache.
 	 * @param name The name to read, returns undefined if this name doesn't exist in the cache.
 	 */
-	read(name: string): any {
+	read<T>(name: string): T {
 		const cache = this.readFile();
 		return cache[name];
 	}
