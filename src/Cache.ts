@@ -69,17 +69,15 @@ export class Cache {
 	get entries(): string[] {
 		return Object.getOwnPropertyNames(this.readFile());
 	}
-}
-
-/**
- * Ensures that some data exists in the cache, and only runs the backup if thee data is not already cached.
- * @param name The name of the entry in the cache.
- * @param backup A function that returns the backup data. This will only be run if the cache entry doesn't exist.
- */
-export function ensureCached<T>(name: string, backup: () => T, cacheFileName = "cache.json"): T {
-	const cache = new Cache(cacheFileName);
-	if (!cache.entries.includes(name)) {
-		cache.write(name, backup());
+	/**
+	 * Ensure that some data exists in the cache, and return the data.
+	 * @param name The entry to check for.
+	 * @param backup A function that returns the data if the entry does not exist. This will only be run if it is needed.
+	 */
+	ensure<T>(name: string, backup: () => T): T {
+		if (!this.entries.includes(name)) {
+			this.write(name, backup());
+		}
+		return this.read(name);
 	}
-	return cache.read(name) as T;
 }
