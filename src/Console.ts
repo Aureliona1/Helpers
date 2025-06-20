@@ -91,3 +91,20 @@ export function fpsRepeat(rep: number, fps: number, c: (i: number) => void) {
  * @param bg Whether to affect the foreground color or the background (Default - false).
  */
 export const rgb = (r: number, g: number, b: number, bg = false): string => "\x1b[" + (bg ? 48 : 38) + ";2;" + (Math.round(r) % 256) + ";" + (Math.round(g) % 256) + ";" + (Math.round(b) % 256) + "m";
+
+/**
+ * Log a message to the console with prepended information about the source, type, and timestamp of the log.
+ * @param msg The message to log.
+ * @param error The type of message (Default - Log).
+ * @param source The source of the log, this may be the function that the log was called in, or the process/application.
+ */
+// deno-lint-ignore no-explicit-any
+export function clog(msg: any, error: "Log" | "Warning" | "Error" = "Log", source = "main") {
+	if (error == "Warning") {
+		console.warn(`${rgb(255, 255, 0)}[!] \x1b[90m[${new Date().toTimeString().substring(0, 8)}] \x1b[90m[${source}] ${rgb(255, 255, 0)}WARNING:\x1b[0m`, msg);
+	} else if (error == "Error") {
+		console.error(`${rgb(255, 0, 0)}[!] \x1b[90m[${new Date().toTimeString().substring(0, 8)}] \x1b[90m[${source}] ${rgb(255, 0, 0)}ERROR:\x1b[0m`, msg);
+	} else {
+		console.log(`\x1b[34m[*] \x1b[90m[${new Date().toTimeString().substring(0, 8)}] \x1b[90m[${source}]\x1b[0m`, msg);
+	}
+}
