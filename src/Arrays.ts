@@ -15,6 +15,7 @@ export type NumberArrLike = Uint16Array | Uint32Array | Uint8Array | Int16Array 
  * @param indexes The indexes of the elements to remove.
  */
 export function arrRem<T extends any[]>(arr: T, indexes: number[]): T {
+	indexes = indexes.toSorted((a, b) => a - b);
 	for (let i = indexes.length - 1; i >= 0; i--) {
 		arr.splice(indexes[i], 1);
 	}
