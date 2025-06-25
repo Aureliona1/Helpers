@@ -27,8 +27,7 @@ export function decimals<T extends string | number | any[] | Record<string, any>
  * Generates a number based on the character codes in a string.
  */
 export function stringCodeToNumber(s: string): number {
-	return s
-		.split(/./)
+	return Array.from(s)
 		.map(x => x.charCodeAt(0))
 		.reduce((x, y) => x + y);
 }
