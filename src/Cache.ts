@@ -1,13 +1,14 @@
 // deno-lint-ignore-file no-explicit-any
+import { clog } from "./Console.ts";
 import { ensureFile } from "./Misc.ts";
 
 export class Cache {
 	private ensureFile() {
 		try {
-			ensureFile(this.fileName);
+			ensureFile(this.fileName, "{}");
 		} catch (e) {
-			console.error("Error ensuring cache file, check your read and write permissions...");
-			console.error(e);
+			clog("Error ensuring cache file, check your read and write permissions...", "Error", "Cache");
+			clog(e, "Error", "Cache");
 		}
 	}
 	private readFile(): Record<string, any> {
@@ -16,14 +17,14 @@ export class Cache {
 		try {
 			raw = Deno.readTextFileSync(this.fileName);
 		} catch (e) {
-			console.error("Error reading cache, check your read permissions...");
-			console.error(e);
+			clog("Error reading cache, check your read permissions...", "Error", "Cache");
+			clog(e, "Error", "Cache");
 		}
 		try {
 			return JSON.parse(raw);
 		} catch (e) {
-			console.error("Error parsing cache contents, consider clearing the cache and trying again...");
-			console.error(e);
+			clog("Error parsing cache contents, consider clearing the cache and trying again...", "Error", "Cache");
+			clog(e, "Error", "Cache");
 		}
 		return {};
 	}
@@ -55,8 +56,8 @@ export class Cache {
 		try {
 			Deno.writeTextFileSync(this.fileName, JSON.stringify(cache));
 		} catch (e) {
-			console.error("Error writing cache file, check your write permissions...");
-			console.error(e);
+			clog("Error writing cache file, check your write permissions...", "Error", "Cache");
+			clog(e, "Error", "Cache");
 		}
 	}
 	/**
@@ -66,8 +67,8 @@ export class Cache {
 		try {
 			Deno.removeSync(this.fileName);
 		} catch (e) {
-			console.error("Error clearing cache, check your write permissions...");
-			console.error(e);
+			clog("Error clearing cache, check your write permissions...", "Error", "Cache");
+			clog(e, "Error", "Cache");
 		}
 	}
 	/**

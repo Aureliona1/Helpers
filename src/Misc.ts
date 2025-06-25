@@ -1,5 +1,6 @@
 // deno-lint-ignore-file no-explicit-any
 
+import { clog } from "./Console.ts";
 import type { Vec4 } from "./Types.ts";
 
 /**
@@ -108,7 +109,7 @@ export function ensureDir(...paths: string[]) {
 				try {
 					Deno.mkdirSync(accumilator);
 				} catch (e) {
-					console.error(e);
+					clog(e, "Error", "ensureDir");
 				}
 			}
 		}
@@ -116,9 +117,11 @@ export function ensureDir(...paths: string[]) {
 }
 
 /**
- * Ensure that a file exists.
+ * Ensure that a file exists, the path to teh file can be many directories deep and these directories will be created if needed.
+ * @param path The path to the file to ensure.
+ * @param contents The contents to place in the file if it needs to be created.
  */
-export function ensureFile(path: string) {
+export function ensureFile(path: string, contents: string | Uint8Array = new Uint8Array()) {
 	path = path.replaceAll("\\", "/");
 	let dir = path.split("/");
 	dir = dir.slice(0, dir.length - 1);
@@ -129,9 +132,13 @@ export function ensureFile(path: string) {
 		Deno.statSync(path);
 	} catch (_) {
 		try {
-			Deno.writeFileSync(path, new Uint8Array());
+			if (typeof contents == "string") {
+				Deno.writeTextFileSync(path, contents);
+			} else {
+				Deno.writeFileSync(path, contents);
+			}
 		} catch (e) {
-			console.error(e);
+			clog(e, "Error", "ensureFile");
 		}
 	}
 }
