@@ -1,6 +1,6 @@
 export class FetchQueue {
 	private active = 0;
-	private queue: (() => void)[] = [];
+	private queue: Record<number, (() => void)[]> = {};
 	private lastReleaseTime = 0;
 
 	/**
@@ -22,8 +22,9 @@ export class FetchQueue {
 
 	/**
 	 * Add a new job to the queue, resolves when the job is accepted.
+	 * @param priority A number that signifies th priority of this request. 0 is the highest priority and will be executed first.
 	 */
-	waitTurn(): Promise<() => void> {
+	waitTurn(priority = 5): Promise<() => void> {
 		return new Promise(res => {
 			const unlock = () => {
 				this.active--;
@@ -37,7 +38,7 @@ export class FetchQueue {
 					this.active++;
 					res(unlock);
 				} else {
-					this.queue.push(tryAcquire);
+					this.queue[priority].push(tryAcquire);
 				}
 			};
 
@@ -46,7 +47,7 @@ export class FetchQueue {
 	}
 
 	private next() {
-		const next = this.queue.shift();
+		const next = this.queue[Math.min(...Object.keys(this.queue).map(x => Number(x)))].shift();
 		if (next) next();
 	}
 
@@ -122,7 +123,7 @@ export class QueuedResponse {
 	 * This will be added to the fetch queue.
 	 */
 	async arrayBuffer(): Promise<ArrayBuffer> {
-		const free = await this.queue.waitTurn();
+		const free = await this.queue.waitTurn(4);
 		try {
 			return await this.raw.arrayBuffer();
 		} finally {
@@ -135,7 +136,7 @@ export class QueuedResponse {
 	 * This will be added to the fetch queue.
 	 */
 	async blob(): Promise<Blob> {
-		const free = await this.queue.waitTurn();
+		const free = await this.queue.waitTurn(4);
 		try {
 			return await this.raw.blob();
 		} finally {
@@ -148,7 +149,7 @@ export class QueuedResponse {
 	 * This will be added to the fetch queue.
 	 */
 	async bytes(): Promise<Uint8Array> {
-		const free = await this.queue.waitTurn();
+		const free = await this.queue.waitTurn(4);
 		try {
 			return await this.raw.bytes();
 		} finally {
@@ -161,7 +162,7 @@ export class QueuedResponse {
 	 * This will be added to the fetch queue.
 	 */
 	async formData(): Promise<FormData> {
-		const free = await this.queue.waitTurn();
+		const free = await this.queue.waitTurn(3);
 		try {
 			return await this.raw.formData();
 		} finally {
@@ -175,7 +176,7 @@ export class QueuedResponse {
 	 */
 	// deno-lint-ignore no-explicit-any
 	async json(): Promise<any> {
-		const free = await this.queue.waitTurn();
+		const free = await this.queue.waitTurn(3);
 		try {
 			return await this.raw.json();
 		} finally {
@@ -188,7 +189,7 @@ export class QueuedResponse {
 	 * This will be added to the fetch queue.
 	 */
 	async text(): Promise<string> {
-		const free = await this.queue.waitTurn();
+		const free = await this.queue.waitTurn(4);
 		try {
 			return await this.raw.text();
 		} finally {
