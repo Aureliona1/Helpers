@@ -55,6 +55,9 @@ export class FetchQueue {
 		const q = this.queue[key];
 		if (q) {
 			const next = q.shift();
+			if (!q.length) {
+				delete this.queue[key];
+			}
 			if (next) next();
 		}
 	}
@@ -72,7 +75,7 @@ export class FetchQueue {
 	 * @param init Additional request initial properties.
 	 */
 	async fetch(input: RequestInfo | URL, init?: RequestInit & { client?: Deno.HttpClient }) {
-		const free = await this.waitTurn();
+		const free = await this.waitTurn(5);
 		try {
 			const raw = await fetch(input, init);
 			return new QueuedResponse(raw, this);
