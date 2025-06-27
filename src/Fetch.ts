@@ -38,7 +38,11 @@ export class FetchQueue {
 					this.active++;
 					res(unlock);
 				} else {
-					this.queue[priority].push(tryAcquire);
+					if (this.queue[priority] == undefined) {
+						this.queue[priority] = [tryAcquire];
+					} else {
+						this.queue[priority].push(tryAcquire);
+					}
 				}
 			};
 
@@ -47,8 +51,12 @@ export class FetchQueue {
 	}
 
 	private next() {
-		const next = this.queue[Math.min(...Object.keys(this.queue).map(x => Number(x)))].shift();
-		if (next) next();
+		const key = Math.min(...Object.keys(this.queue).map(x => Number(x)));
+		const q = this.queue[key];
+		if (q) {
+			const next = q.shift();
+			if (next) next();
+		}
 	}
 
 	/**
