@@ -66,7 +66,7 @@ export class FetchQueue {
 	/**
 	 * Get the current number of active requests.
 	 */
-	get activeRequestCount() {
+	get activeRequestCount(): number {
 		return this.active;
 	}
 
@@ -75,7 +75,7 @@ export class FetchQueue {
 	 * @param input The request info or URL for the fetch request.
 	 * @param init Additional request initial properties.
 	 */
-	async fetch(input: RequestInfo | URL, init?: RequestInit & { client?: Deno.HttpClient }) {
+	async fetch(input: RequestInfo | URL, init?: RequestInit & { client?: Deno.HttpClient }): Promise<QueuedResponse> {
 		const free = await this.waitTurn(5);
 		try {
 			const res = await fetch(input, init);
