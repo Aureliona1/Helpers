@@ -7,8 +7,9 @@ export class FetchQueue {
 	 * A utility class that handles a total max limit of the number of requests that can be run at a time.
 	 * @param maxRequests The maximum number of concurrent requests to allow.
 	 * @param requestTimeoutMS The time in ms between allowing each request to begin, this allows requests to be staggered more.
+	 * @param bufferBody Whether to install request the body of a response once reciving the headers. This means that, down the line, the body methods resolve instantly.
 	 */
-	constructor(readonly maxRequests: number, readonly requestTimeoutMS = 0) {}
+	constructor(readonly maxRequests: number, readonly requestTimeoutMS = 0, public bufferBody = true) {}
 
 	private async waitForDelay() {
 		if (this.requestTimeoutMS <= 0) return;
@@ -77,8 +78,12 @@ export class FetchQueue {
 	async fetch(input: RequestInfo | URL, init?: RequestInit & { client?: Deno.HttpClient }) {
 		const free = await this.waitTurn(5);
 		try {
-			const raw = await fetch(input, init);
-			return new QueuedResponse(raw, this);
+			const res = await fetch(input, init);
+			if (this.bufferBody) {
+				return new QueuedResponse(res, this, await res.blob());
+			} else {
+				return new QueuedResponse(res, this);
+			}
 		} finally {
 			free();
 		}
@@ -116,17 +121,17 @@ export class QueuedResponse {
 	readonly url: string;
 	/**
 	 * A queued response from a FetchQueue. This will be automatically returned from a queued fetch request. It should not be declared separately from a FetchQueue.
-	 * @param raw The raw fetch response.
+	 * @param res The raw fetch response.
 	 * @param queue The source queue. All methods on this class will be run through the queue.
 	 */
-	constructor(private raw: Response, private queue: FetchQueue) {
-		this.headers = raw.headers;
-		this.ok = raw.ok;
-		this.redirected = raw.redirected;
-		this.status = raw.status;
-		this.statusText = raw.statusText;
-		this.type = raw.type;
-		this.url = raw.url;
+	constructor(private res: Response, private queue: FetchQueue, private bodyBlob?: Blob) {
+		this.headers = res.headers;
+		this.ok = res.ok;
+		this.redirected = res.redirected;
+		this.status = res.status;
+		this.statusText = res.statusText;
+		this.type = res.type;
+		this.url = res.url;
 	}
 
 	/**
@@ -134,9 +139,12 @@ export class QueuedResponse {
 	 * This will be added to the fetch queue.
 	 */
 	async arrayBuffer(): Promise<ArrayBuffer> {
+		if (this.bodyBlob) {
+			return await this.bodyBlob.arrayBuffer();
+		}
 		const free = await this.queue.waitTurn(4);
 		try {
-			return await this.raw.arrayBuffer();
+			return await this.res.arrayBuffer();
 		} finally {
 			free();
 		}
@@ -147,9 +155,12 @@ export class QueuedResponse {
 	 * This will be added to the fetch queue.
 	 */
 	async blob(): Promise<Blob> {
+		if (this.bodyBlob) {
+			return this.bodyBlob;
+		}
 		const free = await this.queue.waitTurn(4);
 		try {
-			return await this.raw.blob();
+			return await this.res.blob();
 		} finally {
 			free();
 		}
@@ -160,9 +171,12 @@ export class QueuedResponse {
 	 * This will be added to the fetch queue.
 	 */
 	async bytes(): Promise<Uint8Array> {
+		if (this.bodyBlob) {
+			return await this.bodyBlob.bytes();
+		}
 		const free = await this.queue.waitTurn(4);
 		try {
-			return await this.raw.bytes();
+			return await this.res.bytes();
 		} finally {
 			free();
 		}
@@ -175,7 +189,7 @@ export class QueuedResponse {
 	async formData(): Promise<FormData> {
 		const free = await this.queue.waitTurn(3);
 		try {
-			return await this.raw.formData();
+			return await this.res.formData();
 		} finally {
 			free();
 		}
@@ -189,7 +203,7 @@ export class QueuedResponse {
 	async json(): Promise<any> {
 		const free = await this.queue.waitTurn(3);
 		try {
-			return await this.raw.json();
+			return await this.res.json();
 		} finally {
 			free();
 		}
@@ -202,7 +216,7 @@ export class QueuedResponse {
 	async text(): Promise<string> {
 		const free = await this.queue.waitTurn(4);
 		try {
-			return await this.raw.text();
+			return await this.res.text();
 		} finally {
 			free();
 		}
