@@ -136,7 +136,7 @@ export class QueuedResponse {
 
 	/**
 	 * Get response body as an ArrayBuffer.
-	 * This will be added to the fetch queue.
+	 * This will be added to the fetch queue if bufferBody is set to false in the source fetch queue.
 	 */
 	async arrayBuffer(): Promise<ArrayBuffer> {
 		if (this.bodyBlob) {
@@ -152,7 +152,7 @@ export class QueuedResponse {
 
 	/**
 	 * Get response body as a Blob.
-	 * This will be added to the fetch queue.
+	 * This will be added to the fetch queue if bufferBody is set to false in the source fetch queue.
 	 */
 	async blob(): Promise<Blob> {
 		if (this.bodyBlob) {
@@ -168,7 +168,7 @@ export class QueuedResponse {
 
 	/**
 	 * Get response body as a Uint8Array.
-	 * This will be added to the fetch queue.
+	 * This will be added to the fetch queue if bufferBody is set to false in the source fetch queue.
 	 */
 	async bytes(): Promise<Uint8Array> {
 		if (this.bodyBlob) {
@@ -184,7 +184,7 @@ export class QueuedResponse {
 
 	/**
 	 * Get response body as FormData.
-	 * This will be added to the fetch queue.
+	 * This will be added to the fetch queue with a high priority, this may result in stream failures if the queue is under heavy load.
 	 */
 	async formData(): Promise<FormData> {
 		const free = await this.queue.waitTurn(3);
@@ -197,10 +197,13 @@ export class QueuedResponse {
 
 	/**
 	 * Get response body as parsed JSON.
-	 * This will be added to the fetch queue.
+	 * This will be added to the fetch queue if bufferBody is set to false in the source fetch queue.
 	 */
 	// deno-lint-ignore no-explicit-any
 	async json(): Promise<any> {
+		if (this.bodyBlob) {
+			return JSON.parse(await this.bodyBlob.text());
+		}
 		const free = await this.queue.waitTurn(3);
 		try {
 			return await this.res.json();
@@ -211,9 +214,12 @@ export class QueuedResponse {
 
 	/**
 	 * Get response body as decoded text.
-	 * This will be added to the fetch queue.
+	 * This will be added to the fetch queue if bufferBody is set to false in the source fetch queue.
 	 */
 	async text(): Promise<string> {
+		if (this.bodyBlob) {
+			return await this.bodyBlob.text();
+		}
 		const free = await this.queue.waitTurn(4);
 		try {
 			return await this.res.text();
