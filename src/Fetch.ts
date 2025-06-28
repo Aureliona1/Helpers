@@ -201,9 +201,9 @@ export class QueuedResponse {
 	 */
 	// deno-lint-ignore no-explicit-any
 	async json(): Promise<any> {
-		if (this.bodyBlob) {
-			return JSON.parse(await this.bodyBlob.text());
-		}
+		// if (this.bodyBlob) {
+		// 	return JSON.parse(await this.bodyBlob.text());
+		// }
 		const free = await this.queue.waitTurn(3);
 		try {
 			return await this.res.json();
