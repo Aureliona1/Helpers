@@ -29,7 +29,7 @@ export function deepCopy<T>(obj: T): T {
  * Pause code execution for a set time.
  * @param milliseconds The time (ms) to wait.
  */
-export function sleep(milliseconds: number) {
+export function sleepSync(milliseconds: number) {
 	const date = Date.now();
 	let currentDate;
 	if (milliseconds >= 0) {
@@ -37,6 +37,14 @@ export function sleep(milliseconds: number) {
 			currentDate = Date.now();
 		} while (currentDate - date < milliseconds);
 	}
+}
+
+/**
+ * Pause execution for a set time, must be used with await.
+ * @param milliseconds The time (ms) to wait.
+ */
+export async function sleep(milliseconds: number) {
+	return await new Promise(r => setTimeout(r, milliseconds));
 }
 
 /**

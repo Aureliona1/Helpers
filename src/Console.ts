@@ -1,4 +1,4 @@
-import { sleep } from "./Misc.ts";
+import { sleepSync } from "./Misc.ts";
 import { decimals, msToTimeString } from "./Numbers.ts";
 
 /**
@@ -79,7 +79,7 @@ export function fpsRepeat(rep: number, fps: number, c: (i: number) => void) {
 		const timeStart = Date.now();
 		c(i);
 		const dur = Date.now() - timeStart;
-		sleep(1000 / fps - dur);
+		sleepSync(1000 / fps - dur);
 	}
 }
 
