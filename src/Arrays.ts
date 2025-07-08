@@ -350,11 +350,15 @@ export function interleaveArrs<T>(arr1: ArrayLike<T>, arr2: ArrayLike<T>): T[] {
 }
 
 /**
- * Concatenate 2 Uint8Arrays.
+ * Concatenate Uint8Arrays.
  */
-export function concatUint8(a: Uint8Array, b: Uint8Array): Uint8Array {
-	const out = new Uint8Array(a.length + b.length);
-	out.set(a);
-	out.set(b, a.length);
+export function concatUint8(arrays: Uint8Array[]): Uint8Array {
+	const newLength = arrays.reduce((sum, b) => sum + b.length, 0);
+	const out = new Uint8Array(newLength);
+	let offset = 0;
+	for (const b of arrays) {
+		out.set(b, offset);
+		offset += b.length;
+	}
 	return out;
 }
