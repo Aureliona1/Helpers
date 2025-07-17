@@ -19,3 +19,8 @@ export type Vec4 = [number, number, number, number];
  * 9D Vector.
  */
 export type Vec9 = [number, number, number, number, number, number, number, number, number];
+
+/**
+ * Any type that can be used as a key in a record.
+ */
+export type RecordKey = number | string | symbol;

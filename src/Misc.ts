@@ -1,7 +1,7 @@
 // deno-lint-ignore-file no-explicit-any
 
 import { clog } from "./Console.ts";
-import type { Vec4 } from "./Types.ts";
+import type { RecordKey, Vec4 } from "./Types.ts";
 
 /**
  * Recursively create a new instance of an object and all nested objects.
@@ -186,11 +186,10 @@ export function compare<T>(a: T, b: T): boolean {
 	return a === b;
 }
 
-export class TwoWayMap<K extends string | number | symbol, V extends string | number | symbol> {
+export class TwoWayMap<K extends RecordKey, V extends RecordKey> {
 	readonly reverseMap: Record<V, K>;
 	/**
 	 * A two-way map is a map that can be accessed by it's keys or by it's values. If a value is used as a key, it will return the corresponding key.
-	 * The two-way map cannot be modified, it is intended only for use with readonly maps.
 	 * @param map The initial map. If two keys have the same value, then each instance of the value will overwrite the reverse key.
 	 */
 	constructor(public readonly map: Record<K, V>) {
@@ -209,5 +208,14 @@ export class TwoWayMap<K extends string | number | symbol, V extends string | nu
 	 */
 	revGet(value: V): K {
 		return this.reverseMap[value];
+	}
+	/**
+	 * Set a new value in the map. This will overwrite any existing keys or values.
+	 * @param key The new key in the map.
+	 * @param value The new value in the map.
+	 */
+	set(key: K, value: V) {
+		this.map[key] = value;
+		this.reverseMap[value] = key;
 	}
 }
