@@ -103,19 +103,37 @@ export function byteRgbToHsv(rgb: Uint8Array): Uint8Array {
 }
 
 /**
+ * Check whether a file or directory path can be accessed.
+ *
+ * This ensures:
+ *
+ * - The path exists
+ * - The path has read permissions
+ * - The directory tree to the path has read permissions
+ * - `Deno.read` variants will work on this path.
+ * @param path The path to the path to check.
+ */
+export function pathCanBeAccessed(path: string): boolean {
+	try {
+		Deno.statSync(path);
+		return true;
+	} catch (_) {
+		return false;
+	}
+}
+
+/**
  * Ensures that a dir exists.
  */
 export function ensureDir(...paths: string[]) {
 	paths.forEach(path => {
 		path = path.replaceAll("\\", "/");
 		const dirs = path.split("/");
-		let accumilator = dirs[0];
-		for (let i = 1; i <= dirs.length; accumilator += `/${dirs[i++]}`) {
-			try {
-				Deno.statSync(accumilator);
-			} catch (_) {
+		let accumulator = dirs[0];
+		for (let i = 1; i <= dirs.length; accumulator += `/${dirs[i++]}`) {
+			if (!pathCanBeAccessed(accumulator)) {
 				try {
-					Deno.mkdirSync(accumilator);
+					Deno.mkdirSync(accumulator);
 				} catch (e) {
 					clog(e, "Error", "ensureDir");
 				}
@@ -125,7 +143,7 @@ export function ensureDir(...paths: string[]) {
 }
 
 /**
- * Ensure that a file exists, the path to teh file can be many directories deep and these directories will be created if needed.
+ * Ensure that a file exists, the path to the file can be many directories deep and these directories will be created if needed.
  * @param path The path to the file to ensure.
  * @param contents The contents to place in the file if it needs to be created.
  */
@@ -136,9 +154,7 @@ export function ensureFile(path: string, contents: string | Uint8Array = new Uin
 	if (dir.length) {
 		ensureDir(dir.join("/") + "/");
 	}
-	try {
-		Deno.statSync(path);
-	} catch (_) {
+	if (!pathCanBeAccessed(path)) {
 		try {
 			if (typeof contents == "string") {
 				Deno.writeTextFileSync(path, contents);
@@ -152,7 +168,7 @@ export function ensureFile(path: string, contents: string | Uint8Array = new Uin
 }
 
 /**
- * Recursively compare any types. This function will search through all entries on any type of object or value to get a comparison.
+ * Recursively compare any types. This function will traverse through all entries on any type of object or value to get a comparison.
  * @param a First thing to compare.
  * @param b Second thing to compare.
  */
