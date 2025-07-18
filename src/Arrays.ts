@@ -105,7 +105,7 @@ export class ArrOp<T extends NumberArrLike> {
 		if (typeof arr2 == "number") {
 			return arr1.map(x => x + arr2) as T;
 		} else {
-			return arr1.map((x, i) => x + arr2[i]) as T;
+			return arr1.map((x, i) => x + (arr2[i] ?? 0)) as T;
 		}
 	}
 
@@ -118,7 +118,7 @@ export class ArrOp<T extends NumberArrLike> {
 		if (typeof arr2 == "number") {
 			return arr1.map(x => x - arr2) as T;
 		} else {
-			return arr1.map((x, i) => x - arr2[i]) as T;
+			return arr1.map((x, i) => x - (arr2[i] ?? 0)) as T;
 		}
 	}
 
@@ -131,7 +131,7 @@ export class ArrOp<T extends NumberArrLike> {
 		if (typeof arr2 == "number") {
 			return arr1.map(x => x / arr2) as T;
 		} else {
-			return arr1.map((x, i) => x / arr2[i]) as T;
+			return arr1.map((x, i) => x / (arr2[i] ?? 1)) as T;
 		}
 	}
 
@@ -144,7 +144,7 @@ export class ArrOp<T extends NumberArrLike> {
 		if (typeof arr2 == "number") {
 			return arr1.map(x => x * arr2) as T;
 		} else {
-			return arr1.map((x, i) => x * arr2[i]) as T;
+			return arr1.map((x, i) => x * (arr2[i] ?? 1)) as T;
 		}
 	}
 
@@ -159,7 +159,7 @@ export class ArrOp<T extends NumberArrLike> {
 		if (typeof to == "number") {
 			return from.map(x => lerp(x, to, fraction, ease)) as T;
 		} else {
-			return from.map((x, i) => lerp(x, to[i], fraction, ease)) as T;
+			return from.map((x, i) => lerp(x, to[i] ?? x, fraction, ease)) as T;
 		}
 	}
 
@@ -182,7 +182,7 @@ export class ArrOp<T extends NumberArrLike> {
 	 * Sort an array in ascending order according to each element's numerical value.
 	 * @param arr The array to sort.
 	 */
-	static sortNumericAsc<T extends NumberArrLike>(arr: T): T {
+	static sortAscending<T extends NumberArrLike>(arr: T): T {
 		return arr.sort((a, b) => a - b) as T;
 	}
 
@@ -190,7 +190,7 @@ export class ArrOp<T extends NumberArrLike> {
 	 * Sort an array in descending order according to each element's numerical value.
 	 * @param arr The array to sort.
 	 */
-	static sortNumericDsc<T extends NumberArrLike>(arr: T): T {
+	static sortDescending<T extends NumberArrLike>(arr: T): T {
 		return arr.sort((a, b) => b - a) as T;
 	}
 
@@ -339,7 +339,7 @@ export function interleaveArrs<T>(arr1: ArrayLike<T>, arr2: ArrayLike<T>): T[] {
 	const out = new Array(arr1.length + arr2.length);
 	for (let i = 0; i < arr1.length; i++) {
 		out[i * 2] = arr1[i] ?? 0;
-		out[i * 2 + 1] = arr2[i] ?? 0;
+		out[i * 2 + 1] = arr2[i] ?? 0 ?? 0;
 	}
 	return out;
 }
