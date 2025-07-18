@@ -28,4 +28,9 @@ export type RecordKey = number | string | symbol;
 /**
  * A fixed-byte typed array.
  */
-export type TypedArray = Uint8Array | Uint16Array | Uint32Array | Int8Array | Int16Array | Int32Array;
+export type TypedArray = Uint8Array | Uint16Array | Uint32Array | Int8Array | Int16Array | Int32Array | Float16Array | Float32Array | Float64Array;
+
+/**
+ * A type representing any array type that contains numbers.
+ */
+export type NumberArrLike = TypedArray | Array<number>;

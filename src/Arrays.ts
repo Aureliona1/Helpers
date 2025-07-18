@@ -2,12 +2,7 @@
 
 import { lerp } from "./Interpolation.ts";
 import { decimals, random } from "./Numbers.ts";
-import type { Easing } from "./Types.ts";
-
-/**
- * A type representing any array type that contains numbers.
- */
-export type NumberArrLike = Uint16Array | Uint32Array | Uint8Array | Int16Array | Int32Array | Int8Array | Float16Array | Float32Array | Float64Array | Array<number>;
+import type { Easing, NumberArrLike } from "./Types.ts";
 
 /**
  * Remove entries from an arr and return the modified arr. Affects the original arr, therefore you do not need to reassign.
