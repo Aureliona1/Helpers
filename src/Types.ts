@@ -24,3 +24,8 @@ export type Vec9 = [number, number, number, number, number, number, number, numb
  * Any type that can be used as a key in a record.
  */
 export type RecordKey = number | string | symbol;
+
+/**
+ * A fixed-byte typed array.
+ */
+export type TypedArray = Uint8Array | Uint16Array | Uint32Array | Int8Array | Int16Array | Int32Array;

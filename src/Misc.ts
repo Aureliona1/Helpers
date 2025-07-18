@@ -1,7 +1,7 @@
 // deno-lint-ignore-file no-explicit-any
 
 import { clog } from "./Console.ts";
-import type { RecordKey, Vec4 } from "./Types.ts";
+import type { RecordKey, TypedArray, Vec4 } from "./Types.ts";
 
 /**
  * Recursively create a new instance of an object and all nested objects.
@@ -168,18 +168,74 @@ export function ensureFile(path: string, contents: string | Uint8Array = new Uin
 }
 
 /**
+ * Attempt to coerce the value into an array.
+ * @param value The value to coerce.
+ * @returns Array form of the input value, or empty array if coercion failed.
+ */
+export function toArray(value: any): any[] {
+	if (Array.isArray(value)) {
+		return value;
+	}
+	// if (value instanceof Set) {
+	// 	return Array.from(value);
+	// }
+	if (value instanceof ArrayBuffer) {
+		return Array.from(new Uint8Array(value));
+	}
+
+	// Typed Arrays and DataViews
+	if (ArrayBuffer.isView(value)) {
+		if (value instanceof DataView) {
+			const arr = new Uint8Array(value.buffer, value.byteOffset, value.byteLength);
+			return Array.from(arr);
+		} else {
+			return Array.from(value as TypedArray);
+		}
+	}
+
+	// Other ArrayLikes
+	if (value != null && typeof value.length === "number") {
+		const result = [];
+		for (let i = 0; i < value.length; i++) {
+			result.push(value[i]);
+		}
+		return result;
+	}
+
+	return [];
+}
+
+/**
  * Recursively compare any types. This function will traverse through all entries on any type of object or value to get a comparison.
+ * Cyclic objects and self-references will cause this function to crash.
  * @param a First thing to compare.
  * @param b Second thing to compare.
  */
 export function compare<T>(a: T, b: T): boolean {
-	if (typeof a == "object") {
-		if (Array.isArray(a) && Array.isArray(b)) {
-			if (a.length === b.length) {
-				return a.every((x, i) => compare(x, b[i]));
+	if (typeof a === "object" && !(a instanceof Date)) {
+		// Array
+		const arr = toArray(a);
+		const brr = toArray(b);
+		if (arr.length && brr.length) {
+			if (arr.length === brr.length) {
+				return arr.every((x, i) => compare(x, brr[i]));
 			}
 			return false;
-		} else {
+		}
+		// Map
+		else if (a instanceof Map && b instanceof Map) {
+			if (a.size === b.size) {
+				return a.entries().every(x => compare(x[1], b.get(x[0])));
+			}
+			return false;
+		}
+		// Set
+		else if (a instanceof Set && b instanceof Set) {
+			const oldSize = a.size;
+			return oldSize === a.union(b).size;
+		}
+		// Record / Object
+		else {
 			return Object.entries(a as Record<any, any>).every(x => compare(x[1], (b as Record<any, any>)[x[0]]));
 		}
 	}
