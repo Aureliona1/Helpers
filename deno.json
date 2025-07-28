@@ -1,4 +1,20 @@
 {
+  "test": {
+    "include": [
+      "test/"
+    ]
+  },
+  "lint": {
+    "include": [
+      "src/",
+      "mod.ts"
+    ],
+    "rules": {
+      "tags": [
+        "jsr"
+      ]
+    }
+  },
   "name": "@aurellis/helpers",
   "version": "1.2.3",
   "license": "MIT",

@@ -1,7 +1,6 @@
 // deno-lint-ignore-file no-explicit-any
 import type { TypedArray } from "@aurellis/helpers";
-import { lerp } from "./Interpolation.ts";
-import { decimals, random } from "./Numbers.ts";
+import { decimals, lerp, random } from "./Numbers.ts";
 import type { Easing, IntTypedArray, NumberArray, UintTypedArray } from "./Types.ts";
 
 /**
@@ -24,7 +23,7 @@ export function arrRem<T extends any[]>(arr: T, indices: UintTypedArray | IntTyp
  */
 export const arrFromFunction = <T>(length: number, func: (x: number) => T): T[] => new Array(length).fill(0).map((_, i) => func(i));
 
-export class randArray {
+export class RandomArray {
 	/**
 	 * Creates an array of random numbers with a seed for reproducible results.
 	 * @param seed The seed for prng generation, leave blank to keep random.
@@ -46,22 +45,17 @@ export class randArray {
 	 * @returns An array of random values.
 	 */
 	runUnique(buffer = this.length): number[] {
-		const res: number[] = [];
-		for (let i = 0; i < this.length; i++) {
-			let unique = false,
-				att = NaN;
-			for (let j = 0; j < buffer && !unique; j++) {
-				att = decimals(random(this.range[0], this.range[1], `${this.seed}blah${i}blah${j}`), this.decimals);
-				unique = true;
-				res.forEach(x => {
-					if (x == att) {
-						unique = false;
-					}
-				});
+		const map = new Map<number, boolean>();
+		for (let fails = 0; fails < buffer && map.size < this.length; ) {
+			const oldSize = map.size;
+			map.set(random(this.range[0], this.range[1], `${this.seed}delim${map.size}delim${fails}`, this.decimals), true);
+			if (map.size === oldSize) {
+				fails++;
+			} else {
+				fails = 0;
 			}
-			res.push(att);
 		}
-		return res;
+		return Array.from(map.keys());
 	}
 	/**
 	 * Ensures that no consecutive numbers are identical.
@@ -95,6 +89,10 @@ export class randArray {
 	}
 }
 
+/**
+ * A utility class that provide several static and instanced methods for working with arrays.
+ * All static methods do not mutate the source array/s.
+ */
 export class ArrOp<T extends NumberArray> {
 	/**
 	 * Add an array or a number to an array.
@@ -169,13 +167,20 @@ export class ArrOp<T extends NumberArray> {
 	 * @param seed The seed for the shuffle (leave blank for random).
 	 */
 	static shuffle<T extends NumberArray>(arr: T, seed: number = Math.random()): T {
-		const swap = (a: number, b: number) => {
-			[arr[a], arr[b]] = [arr[b], arr[a]];
+		const Constructor = arr.constructor as {
+			new (length: number): T;
 		};
-		for (let i = 0; i < arr.length; i++) {
-			swap(random(0, arr.length, seed + i * 26436 + 1, 0), random(0, arr.length, seed + i * 2636 + 134, 0));
+		const out = new Constructor(arr.length);
+		for (let i = 0; i < out.length; i++) {
+			out[i] = arr[i];
 		}
-		return arr;
+		const swap = (a: number, b: number) => {
+			[out[a], out[b]] = [out[b], out[a]];
+		};
+		for (let i = 0; i < out.length; i++) {
+			swap(random(0, out.length, seed + i * 26436 + 1, 0), random(0, out.length, seed + i * 2636 + 134, 0));
+		}
+		return out;
 	}
 
 	/**
@@ -183,7 +188,7 @@ export class ArrOp<T extends NumberArray> {
 	 * @param arr The array to sort.
 	 */
 	static sortAscending<T extends NumberArray>(arr: T): T {
-		return arr.sort((a, b) => a - b) as T;
+		return arr.toSorted((a, b) => a - b) as T;
 	}
 
 	/**
@@ -191,7 +196,7 @@ export class ArrOp<T extends NumberArray> {
 	 * @param arr The array to sort.
 	 */
 	static sortDescending<T extends NumberArray>(arr: T): T {
-		return arr.sort((a, b) => b - a) as T;
+		return arr.toSorted((a, b) => b - a) as T;
 	}
 
 	/**
@@ -207,7 +212,7 @@ export class ArrOp<T extends NumberArray> {
 	 * @param arr The array to find the mean of.
 	 */
 	static mean(arr: NumberArray): number {
-		return [...arr].reduce((a, b) => a + b) / arr.length;
+		return ArrOp.sum(arr) / arr.length;
 	}
 
 	/**
@@ -262,24 +267,6 @@ export class ArrOp<T extends NumberArray> {
 	}
 
 	/**
-	 * Clamp the maximum value in the array to this value.
-	 */
-	set max(x: number) {
-		this.arr.forEach(a => {
-			a = a > x ? x : a;
-		});
-	}
-
-	/**
-	 * Clamp the minimum value in the array to this value.
-	 */
-	set min(x: number) {
-		this.arr.forEach(a => {
-			a = a < x ? x : a;
-		});
-	}
-
-	/**
 	 * Get the element in the array with the least numerical value.
 	 */
 	get min(): number {
@@ -297,7 +284,7 @@ export class ArrOp<T extends NumberArray> {
 	 * Get the average (mean) of the values in the array.
 	 */
 	get mean(): number {
-		return Array.from(this.arr).reduce((a, b) => a + b) / this.arr.length;
+		return ArrOp.mean(this.arr);
 	}
 
 	/**
