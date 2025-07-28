@@ -4,7 +4,7 @@ import { compare } from "../src/Misc.ts";
 import { assert } from "./assert.ts";
 
 Deno.test({
-	name: "Arr Rem",
+	name: "Array Remove",
 	fn: () => {
 		const arr = [0, 1, 2, 3, 4, 5, 4, 3, 2, 1];
 		const indices = [5, 0, 2];
@@ -14,7 +14,7 @@ Deno.test({
 });
 
 Deno.test({
-	name: "Arr From function",
+	name: "Array From function",
 	fn: () => {
 		assert(
 			compare(
