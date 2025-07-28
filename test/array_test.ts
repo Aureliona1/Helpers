@@ -1,4 +1,3 @@
-import { clog } from "@aurellis/helpers";
 import { arrFromFunction, ArrOp, arrRem, concatTypedArray, interleaveArrs, RandomArray } from "../src/Arrays.ts";
 import { compare } from "../src/Misc.ts";
 import { assert } from "./assert.ts";
