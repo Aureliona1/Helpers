@@ -2,17 +2,17 @@
 import type { TypedArray } from "@aurellis/helpers";
 import { lerp } from "./Interpolation.ts";
 import { decimals, random } from "./Numbers.ts";
-import type { Easing, NumberArrLike } from "./Types.ts";
+import type { Easing, IntTypedArray, NumberArray, UintTypedArray } from "./Types.ts";
 
 /**
- * Remove entries from an arr and return the modified arr. Affects the original arr, therefore you do not need to reassign.
- * @param arr The arr to remove elements from.
- * @param indexes The indexes of the elements to remove.
+ * Remove entries from an array and return the modified array. Affects the original array, therefore you do not need to reassign.
+ * @param arr The array to remove elements from.
+ * @param indices The indices of the elements to remove.
  */
-export function arrRem<T extends any[]>(arr: T, indexes: number[]): T {
-	indexes = indexes.toSorted((a, b) => a - b);
-	for (let i = indexes.length - 1; i >= 0; i--) {
-		arr.splice(indexes[i], 1);
+export function arrRem<T extends any[]>(arr: T, indices: UintTypedArray | IntTypedArray | Array<number>): T {
+	indices = indices.toSorted((a, b) => a - b);
+	for (let i = indices.length - 1; i >= 0; i--) {
+		arr.splice(indices[i], 1);
 	}
 	return arr as T;
 }
@@ -26,24 +26,24 @@ export const arrFromFunction = <T>(length: number, func: (x: number) => T): T[] 
 
 export class randArray {
 	/**
-	 * Creates an arr of random numbers with a seed for reproducible results.
+	 * Creates an array of random numbers with a seed for reproducible results.
 	 * @param seed The seed for prng generation, leave blank to keep random.
-	 * @param range The min/max that the numbers in the arr can be.
-	 * @param length The length of the arr (how many numbers to generate).
+	 * @param range The min/max that the numbers in the array can be.
+	 * @param length The length of the array (how many numbers to generate).
 	 * @param decimals The precision of the result (0 for integers).
 	 */
 	constructor(public seed: number | string = Math.random(), public range: [number, number] = [0, 1], public length = 2, public decimals = 5) {}
 	/**
-	 * Creates the arr based on set parameters.
-	 * @returns An arr of random values.
+	 * Creates the array based on set parameters.
+	 * @returns An array of random values.
 	 */
 	run(): number[] {
 		return arrFromFunction(this.length, x => decimals(random(this.range[0], this.range[1], `${this.seed}blahblah${x}`), this.decimals));
 	}
 	/**
-	 * Ensures that no two numbers in the arr are identical. This is the slowest method on this class. Please only use it if you must.
+	 * Ensures that no two numbers in the array are identical. This is the slowest method on this class. Please only use it if you must.
 	 * @param buffer The number of times to try for a unique number (prevents infinite repeats under certain circumstances).
-	 * @returns An arr of random values.
+	 * @returns An array of random values.
 	 */
 	runUnique(buffer = this.length): number[] {
 		const res: number[] = [];
@@ -67,7 +67,7 @@ export class randArray {
 	 * Ensures that no consecutive numbers are identical.
 	 * @param gap The number of indexes before allowing an identical number.
 	 * @param buffer The number of times to try for a unique number (prevents infinite repeats under certain circumstances).
-	 * @returns An arr of random values.
+	 * @returns An array of random values.
 	 */
 	runUniqueConsecutive(gap = 1, buffer = this.length): number[] {
 		const res: number[] = [],
@@ -95,13 +95,13 @@ export class randArray {
 	}
 }
 
-export class ArrOp<T extends NumberArrLike> {
+export class ArrOp<T extends NumberArray> {
 	/**
 	 * Add an array or a number to an array.
 	 * @param arr1 The base array.
 	 * @param arr2 The array or number to add.
 	 */
-	static add<T extends NumberArrLike, T2 extends NumberArrLike>(arr1: T, arr2: number | T2): T {
+	static add<T extends NumberArray, T2 extends NumberArray>(arr1: T, arr2: number | T2): T {
 		if (typeof arr2 == "number") {
 			return arr1.map(x => x + arr2) as T;
 		} else {
@@ -114,7 +114,7 @@ export class ArrOp<T extends NumberArrLike> {
 	 * @param arr1 The base array.
 	 * @param arr2 The array or number to subtract from the base array.
 	 */
-	static subtract<T extends NumberArrLike, T2 extends NumberArrLike>(arr1: T, arr2: number | T2): T {
+	static subtract<T extends NumberArray, T2 extends NumberArray>(arr1: T, arr2: number | T2): T {
 		if (typeof arr2 == "number") {
 			return arr1.map(x => x - arr2) as T;
 		} else {
@@ -127,7 +127,7 @@ export class ArrOp<T extends NumberArrLike> {
 	 * @param arr1 The base array.
 	 * @param arr2 The array or number to divide by.
 	 */
-	static divide<T extends NumberArrLike, T2 extends NumberArrLike>(arr1: T, arr2: number | T2): T {
+	static divide<T extends NumberArray, T2 extends NumberArray>(arr1: T, arr2: number | T2): T {
 		if (typeof arr2 == "number") {
 			return arr1.map(x => x / arr2) as T;
 		} else {
@@ -140,7 +140,7 @@ export class ArrOp<T extends NumberArrLike> {
 	 * @param arr1 The base array.
 	 * @param arr2 The array or number to mulitply by.
 	 */
-	static multiply<T extends NumberArrLike, T2 extends NumberArrLike>(arr1: T, arr2: number | T2): T {
+	static multiply<T extends NumberArray, T2 extends NumberArray>(arr1: T, arr2: number | T2): T {
 		if (typeof arr2 == "number") {
 			return arr1.map(x => x * arr2) as T;
 		} else {
@@ -155,7 +155,7 @@ export class ArrOp<T extends NumberArrLike> {
 	 * @param fraction The fraction of interpolation (0 - 1).
 	 * @param ease Optional easing to add to the lerp.
 	 */
-	static lerp<T extends NumberArrLike, T2 extends NumberArrLike>(from: T, to: number | T2, fraction: number, ease?: Easing): T {
+	static lerp<T extends NumberArray, T2 extends NumberArray>(from: T, to: number | T2, fraction: number, ease?: Easing): T {
 		if (typeof to == "number") {
 			return from.map(x => lerp(x, to, fraction, ease)) as T;
 		} else {
@@ -168,7 +168,7 @@ export class ArrOp<T extends NumberArrLike> {
 	 * @param arr The array to shuffle.
 	 * @param seed The seed for the shuffle (leave blank for random).
 	 */
-	static shuffle<T extends NumberArrLike>(arr: T, seed: number = Math.random()): T {
+	static shuffle<T extends NumberArray>(arr: T, seed: number = Math.random()): T {
 		const swap = (a: number, b: number) => {
 			[arr[a], arr[b]] = [arr[b], arr[a]];
 		};
@@ -182,7 +182,7 @@ export class ArrOp<T extends NumberArrLike> {
 	 * Sort an array in ascending order according to each element's numerical value.
 	 * @param arr The array to sort.
 	 */
-	static sortAscending<T extends NumberArrLike>(arr: T): T {
+	static sortAscending<T extends NumberArray>(arr: T): T {
 		return arr.sort((a, b) => a - b) as T;
 	}
 
@@ -190,7 +190,7 @@ export class ArrOp<T extends NumberArrLike> {
 	 * Sort an array in descending order according to each element's numerical value.
 	 * @param arr The array to sort.
 	 */
-	static sortDescending<T extends NumberArrLike>(arr: T): T {
+	static sortDescending<T extends NumberArray>(arr: T): T {
 		return arr.sort((a, b) => b - a) as T;
 	}
 
@@ -198,7 +198,7 @@ export class ArrOp<T extends NumberArrLike> {
 	 * Get the total numeric range of the array. i.e., the distance between the greatest and least elements.
 	 * @param arr The array.
 	 */
-	static range(arr: NumberArrLike): number {
+	static range(arr: NumberArray): number {
 		return Math.max(...arr) - Math.min(...arr);
 	}
 
@@ -206,7 +206,7 @@ export class ArrOp<T extends NumberArrLike> {
 	 * Get the numeric average (mean) of the array.
 	 * @param arr The array to find the mean of.
 	 */
-	static mean(arr: NumberArrLike): number {
+	static mean(arr: NumberArray): number {
 		return [...arr].reduce((a, b) => a + b) / arr.length;
 	}
 
@@ -214,7 +214,7 @@ export class ArrOp<T extends NumberArrLike> {
 	 * Get the numeric median of the array.
 	 * @param arr The array to find the median of.
 	 */
-	static median(arr: NumberArrLike): number {
+	static median(arr: NumberArray): number {
 		return arr.toSorted((a, b) => a - b)[Math.floor(arr.length / 2)];
 	}
 
@@ -222,8 +222,8 @@ export class ArrOp<T extends NumberArrLike> {
 	 * Get the most common value (mode) in the array.
 	 * @param arr The array to find the mode of.
 	 */
-	static mode(arr: NumberArrLike): number {
-		const out: NumberArrLike[] = [];
+	static mode(arr: NumberArray): number {
+		const out: NumberArray[] = [];
 		const set = [...new Set(arr)];
 		for (let i = 0; i < set.length; i++) {
 			let instances = 0;
@@ -241,14 +241,14 @@ export class ArrOp<T extends NumberArrLike> {
 	/**
 	 * Get the sum of all the elements in the array.
 	 */
-	static sum(arr: NumberArrLike): number {
+	static sum(arr: NumberArray): number {
 		return Array.from(arr).reduce((a, b) => a + b);
 	}
 
 	/**
 	 * Get the product of all the elements in the array.
 	 */
-	static product(arr: NumberArrLike): number {
+	static product(arr: NumberArray): number {
 		return Array.from(arr).reduce((a, b) => a * b);
 	}
 
@@ -330,16 +330,16 @@ export class ArrOp<T extends NumberArrLike> {
 }
 
 /**
- * Interleave two Arrays. If the length differs, 0s will be added for the missing entries of the shorter arr.
+ * Interleave two Arrays. If the length differs, 0s will be added for the missing entries of the shorter array.
  * @param arr1 The first arr (this will be the first index of the resulting arr).
  * @param arr2 The second arr (this will be the last index of the resulting arr).
  * @returns T[]
  */
 export function interleaveArrs<T>(arr1: ArrayLike<T>, arr2: ArrayLike<T>): T[] {
 	const out = new Array(arr1.length + arr2.length);
-	for (let i = 0; i < arr1.length; i++) {
-		out[i * 2] = arr1[i] ?? 0;
-		out[i * 2 + 1] = arr2[i] ?? 0 ?? 0;
+	for (let i = 0; i < out.length; i += 2) {
+		out[i] = arr1[Math.floor(i / 2)] ?? 0;
+		out[i + 1] = arr2[Math.floor(i / 2)] ?? 0;
 	}
 	return out;
 }
