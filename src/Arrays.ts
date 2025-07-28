@@ -1,5 +1,5 @@
 // deno-lint-ignore-file no-explicit-any
-
+import type { TypedArray } from "@aurellis/helpers";
 import { lerp } from "./Interpolation.ts";
 import { decimals, random } from "./Numbers.ts";
 import type { Easing, NumberArrLike } from "./Types.ts";
@@ -347,9 +347,12 @@ export function interleaveArrs<T>(arr1: ArrayLike<T>, arr2: ArrayLike<T>): T[] {
 /**
  * Concatenate Uint8Arrays.
  */
-export function concatUint8(arrays: Uint8Array[]): Uint8Array {
+export function concatTypedArray<T extends TypedArray>(arrays: T[]): T {
 	const newLength = arrays.reduce((sum, b) => sum + b.length, 0);
-	const out = new Uint8Array(newLength);
+	const Constructor = arrays[0].constructor as {
+		new (length: number): T;
+	};
+	const out = new Constructor(newLength);
 	let offset = 0;
 	for (const b of arrays) {
 		out.set(b, offset);
