@@ -336,7 +336,7 @@ export class ArrOp<T extends NumberArray> {
  * @returns T[]
  */
 export function interleaveArrs<T>(arr1: ArrayLike<T>, arr2: ArrayLike<T>): T[] {
-	const out = new Array(arr1.length + arr2.length);
+	const out = new Array(Math.max(arr1.length, arr2.length) * 2);
 	for (let i = 0; i < out.length; i += 2) {
 		out[i] = arr1[Math.floor(i / 2)] ?? 0;
 		out[i + 1] = arr2[Math.floor(i / 2)] ?? 0;
