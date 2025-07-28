@@ -257,6 +257,10 @@ export class ArrOp<T extends NumberArray> {
 		return Array.from(arr).reduce((a, b) => a * b);
 	}
 
+	/**
+	 * A utility class that either operates on arrays through static methods, or provides information about an array through an instance.
+	 * @param arr The array to get information about.
+	 */
 	constructor(public arr: T) {}
 
 	/**
@@ -291,7 +295,7 @@ export class ArrOp<T extends NumberArray> {
 	 * Get the median value of the array.
 	 */
 	get median(): number {
-		return this.arr.toSorted((a, b) => a - b)[Math.floor(this.arr.length / 2)];
+		return ArrOp.sortAscending(this.arr)[Math.floor(this.arr.length / 2)];
 	}
 
 	/**
@@ -305,14 +309,14 @@ export class ArrOp<T extends NumberArray> {
 	 * Get the product of all the elements of the array.
 	 */
 	get product(): number {
-		return Array.from(this.arr).reduce((a, b) => a * b);
+		return ArrOp.product(this.arr);
 	}
 
 	/**
 	 * Get the sum of all the elements of the array.
 	 */
 	get sum(): number {
-		return Array.from(this.arr).reduce((a, b) => a + b);
+		return ArrOp.sum(this.arr);
 	}
 }
 
@@ -320,7 +324,6 @@ export class ArrOp<T extends NumberArray> {
  * Interleave two Arrays. If the length differs, 0s will be added for the missing entries of the shorter array.
  * @param arr1 The first arr (this will be the first index of the resulting arr).
  * @param arr2 The second arr (this will be the last index of the resulting arr).
- * @returns T[]
  */
 export function interleaveArrs<T>(arr1: ArrayLike<T>, arr2: ArrayLike<T>): T[] {
 	const out = new Array(Math.max(arr1.length, arr2.length) * 2);
@@ -332,9 +335,10 @@ export function interleaveArrs<T>(arr1: ArrayLike<T>, arr2: ArrayLike<T>): T[] {
 }
 
 /**
- * Concatenate Uint8Arrays.
+ * Concatenate several typed arrays. The arrays must all be the same type.
+ * @param arrays The list of arrays to concatenate.
  */
-export function concatTypedArray<T extends TypedArray>(arrays: T[]): T {
+export function concatTypedArray<T extends TypedArray>(...arrays: T[]): T {
 	const newLength = arrays.reduce((sum, b) => sum + b.length, 0);
 	const Constructor = arrays[0].constructor as {
 		new (length: number): T;
