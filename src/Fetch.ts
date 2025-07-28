@@ -7,7 +7,7 @@ export class FetchQueue {
 	 * A utility class that handles a total max limit of the number of requests that can be run at a time.
 	 * @param maxRequests The maximum number of concurrent requests to allow.
 	 * @param requestTimeoutMS The time in ms between allowing each request to begin, this allows requests to be staggered more.
-	 * @param bufferBody Whether to install request the body of a response once reciving the headers. This means that, down the line, the body methods resolve instantly.
+	 * @param bufferBody Whether to instantly request the body of a response once receiving the headers. This means that, down the line, the body methods resolve instantly.
 	 */
 	constructor(readonly maxRequests: number, readonly requestTimeoutMS = 0, public bufferBody = true) {}
 
