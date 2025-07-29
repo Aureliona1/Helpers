@@ -28,3 +28,6 @@ jobs:
 
       - name: Run tests
         run: deno test --allow-all
+
+      - name: Run documentation linter
+        run: deno doc --lint mod.ts
