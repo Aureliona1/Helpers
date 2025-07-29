@@ -15,6 +15,12 @@
       ]
     }
   },
+  "tasks": {
+    "commit": {
+      "description": "Run pre-commit checks.",
+      "command": "deno doc --lint mod.ts && deno lint && deno test --allow-all"
+    }
+  },
   "name": "@aurellis/helpers",
   "version": "1.2.4",
   "license": "MIT",
