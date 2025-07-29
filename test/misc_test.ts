@@ -1,4 +1,4 @@
-import { byteHsvToRgb, byteRgbToHsv, compare, deepCopy, ensureDir, hsv2rgb, pathCanBeAccessed, rgb2hsv, sleep, sleepSync } from "../src/Misc.ts";
+import { byteHsvToRgb, byteRgbToHsv, compare, deepCopy, ensureDir, hsv2rgb, pathCanBeAccessed, rgb2hsv, sleep, sleepSync, toArray, TwoWayMap } from "../src/Misc.ts";
 import { assert } from "./assert.ts";
 
 Deno.test({
@@ -84,5 +84,26 @@ Deno.test({
 		assert(compare(byteRgbToHsv(new Uint8Array([255, 255, 255, 255])), new Uint8Array([0, 0, 255, 255])));
 		assert(compare(byteRgbToHsv(new Uint8Array([0, 255, 0, 255])), new Uint8Array([255 / 3, 255, 255, 255])));
 		assert(compare(byteRgbToHsv(new Uint8Array([0, 0, 0, 255])), new Uint8Array([0, 0, 0, 255])));
+	}
+});
+
+Deno.test({
+	name: "To Array",
+	fn: () => {
+		assert(compare(toArray(new Uint8Array([1, 2, 3, 4])), [1, 2, 3, 4]));
+		assert(compare(toArray([1, 2, 3]), [1, 2, 3]));
+		assert(compare(toArray({}), []));
+	}
+});
+
+Deno.test({
+	name: "Two-Way Map",
+	fn: () => {
+		const m = new TwoWayMap({ a: 1, b: 2 });
+		assert(m.get("a") === 1);
+		assert(m.revGet(2) === "b");
+		m.set("a", 2);
+		assert(m.get("a") === 2);
+		assert(m.revGet(2) === "a");
 	}
 });

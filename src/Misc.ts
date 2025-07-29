@@ -271,9 +271,9 @@ export class TwoWayMap<K extends RecordKey, V extends RecordKey> {
 		return this.reverseMap[value];
 	}
 	/**
-	 * Set a new value in the map. This will overwrite any existing keys or values.
-	 * @param key The new key in the map.
-	 * @param value The new value in the map.
+	 * Update a value in the map, this cannot be used to add new entries, only update old ones.
+	 * @param key The updated key in the map.
+	 * @param value The updated value in the map.
 	 */
 	set(key: K, value: V) {
 		this.map[key] = value;
