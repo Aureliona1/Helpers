@@ -26,7 +26,7 @@ export function deepCopy<T>(obj: T): T {
 }
 
 /**
- * Pause code execution for a set time.
+ * Block the main thread for a set time.
  * @param milliseconds The time (ms) to wait.
  */
 export function sleepSync(milliseconds: number) {
@@ -176,9 +176,6 @@ export function toArray(value: any): any[] {
 	if (Array.isArray(value)) {
 		return value;
 	}
-	// if (value instanceof Set) {
-	// 	return Array.from(value);
-	// }
 	if (value instanceof ArrayBuffer) {
 		return Array.from(new Uint8Array(value));
 	}
