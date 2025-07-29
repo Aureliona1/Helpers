@@ -144,7 +144,7 @@ export function msToTimeString(time: number): string {
 		ms = time;
 		time -= ms;
 	}
-	return `${rgb(100, 150, 255) + h}h:${m}m:${s}.${ms.toString().padEnd(3, "0")}s\x1b[0m`;
+	return `${h ? h + "h:" : ""}${m ? m + "m:" : ""}${s ? s + "s:" : ""}${ms}ms`;
 }
 
 /**
