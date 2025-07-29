@@ -23,6 +23,9 @@ export function arrRem<T extends any[]>(arr: T, indices: UintTypedArray | IntTyp
  */
 export const arrFromFunction = <T>(length: number, func: (x: number) => T): T[] => new Array(length).fill(0).map((_, i) => func(i));
 
+/**
+ * Creates an array of random numbers with a seed for reproducible results.
+ */
 export class RandomArray {
 	/**
 	 * Creates an array of random numbers with a seed for reproducible results.

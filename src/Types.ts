@@ -1,5 +1,5 @@
-/** Easing type bases. */
-type EaseBase<T extends string> = `easeIn${T}` | `easeOut${T}` | `easeInOut${T}`;
+/** Easing variations of standard easings, this type is only a helper for {@link Easing} */
+export type EaseBase<T extends string> = `easeIn${T}` | `easeOut${T}` | `easeInOut${T}`;
 /** All easings. */
 export type Easing = "easeLinear" | "easeStep" | EaseBase<"Quad"> | EaseBase<"Cubic"> | EaseBase<"Quart"> | EaseBase<"Quint"> | EaseBase<"Sine"> | EaseBase<"Expo"> | EaseBase<"Circ"> | EaseBase<"Elastic"> | EaseBase<"Back"> | EaseBase<"Bounce">;
 

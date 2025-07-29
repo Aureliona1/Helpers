@@ -239,10 +239,18 @@ export function compare<T>(a: T, b: T): boolean {
 	return a === b;
 }
 
+/**
+ * A two-way map is a map that can be accessed by its keys or by its values.
+ * If a value is used as a key, it will return the corresponding key.
+ */
 export class TwoWayMap<K extends RecordKey, V extends RecordKey> {
+	/**
+	 * Internal map that contains the reversed {value, key} mappings.
+	 * Only use this for referencing key/value types.
+	 */
 	readonly reverseMap: Record<V, K>;
 	/**
-	 * A two-way map is a map that can be accessed by it's keys or by it's values. If a value is used as a key, it will return the corresponding key.
+	 * A two-way map is a map that can be accessed by its keys or by its values. If a value is used as a key, it will return the corresponding key.
 	 * @param map The initial map. If two keys have the same value, then each instance of the value will overwrite the reverse key.
 	 */
 	constructor(public readonly map: Record<K, V>) {

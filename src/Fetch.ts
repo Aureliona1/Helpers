@@ -1,3 +1,6 @@
+/**
+ * A utility class that handles a total max limit of the number of requests that can be run at a time.
+ */
 export class FetchQueue {
 	private active = 0;
 	private queue: Record<number, (() => void)[]> = {};
@@ -11,6 +14,9 @@ export class FetchQueue {
 	 */
 	constructor(readonly maxRequests: number, readonly requestTimeoutMS = 0, public bufferBody = true) {}
 
+	/**
+	 * Await the specified delay between queued requests.
+	 */
 	private async waitForDelay() {
 		if (this.requestTimeoutMS <= 0) return;
 
@@ -51,6 +57,9 @@ export class FetchQueue {
 		});
 	}
 
+	/**
+	 * Continue to the next turn in the queue.
+	 */
 	private next() {
 		const key = Math.min(...Object.keys(this.queue).map(x => Number(x)));
 		const q = this.queue[key];
@@ -90,6 +99,11 @@ export class FetchQueue {
 	}
 }
 
+/**
+ * A queued response from a FetchQueue.
+ * This will be automagically initialised from a queued fetch request.
+ * It should not be declared separately from a FetchQueue.
+ */
 export class QueuedResponse {
 	/**
 	 * Get response headers.
@@ -120,7 +134,9 @@ export class QueuedResponse {
 	 */
 	readonly url: string;
 	/**
-	 * A queued response from a FetchQueue. This will be automatically returned from a queued fetch request. It should not be declared separately from a FetchQueue.
+	 * A queued response from a FetchQueue.
+	 * This will be automagically initialised from a queued fetch request.
+	 * It should not be declared separately from a FetchQueue.
 	 * @param res The raw fetch response.
 	 * @param queue The source queue. All methods on this class will be run through the queue.
 	 */

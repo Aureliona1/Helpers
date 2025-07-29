@@ -2,7 +2,13 @@
 import { clog } from "./Console.ts";
 import { ensureFile } from "./Misc.ts";
 
+/**
+ * Access and modify a cache file.
+ */
 export class Cache {
+	/**
+	 * Create an empty cache if absent.
+	 */
 	private ensureFile() {
 		try {
 			ensureFile(this.fileName, "{}");
@@ -11,6 +17,9 @@ export class Cache {
 			clog(e, "Error", "Cache");
 		}
 	}
+	/**
+	 * Read and parse the contents of the cache file.
+	 */
 	private readFile(): Record<string, any> {
 		this.ensureFile();
 		let raw = "{}";

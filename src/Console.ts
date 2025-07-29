@@ -92,6 +92,9 @@ export function fpsRepeat(rep: number, fps: number, c: (i: number) => void) {
  */
 export const rgb = (r: number, g: number, b: number, bg = false): string => "\x1b[" + (bg ? 48 : 38) + ";2;" + (Math.round(r) % 256) + ";" + (Math.round(g) % 256) + ";" + (Math.round(b) % 256) + "m";
 
+/**
+ * The time format used by the clog function.
+ */
 export let clogTimeFormat: "System Clock" | "Script Run Time" = "System Clock";
 const scriptStartTime = Date.now();
 
