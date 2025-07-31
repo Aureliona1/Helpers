@@ -1,4 +1,4 @@
-import { arrFromFunction, ArrOp, arrRem, concatTypedArray, interleaveArrs, RandomArray } from "../src/Arrays.ts";
+import { arrFromFunction, ArrOp, arrRem, concatTypedArray, RandomArray } from "../src/Arrays.ts";
 import { compare } from "../src/Misc.ts";
 import { assert } from "./assert.ts";
 
@@ -190,7 +190,7 @@ Deno.test({
 	fn: () => {
 		const arr1 = [1, 3, 5];
 		const arr2 = [2, 4, 6];
-		assert(compare(interleaveArrs(arr1, arr2), [1, 2, 3, 4, 5, 6]));
+		assert(compare(ArrOp.interleave(arr1, arr2), [1, 2, 3, 4, 5, 6]));
 	}
 });
 

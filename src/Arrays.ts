@@ -261,6 +261,22 @@ export class ArrOp<T extends NumberArray> {
 	}
 
 	/**
+	 * Interleave multiple of the same type of array togther.
+	 * If the length of the arrays differ, the longer arrays will be chopped to the length of the shortest one.
+	 * @param arrays The arrays to interleave.
+	 */
+	static interleave<T extends NumberArray>(...arrays: T[]): T {
+		const Constructor = arrays[0].constructor as {
+			new (length: number): T;
+		};
+		const output = new Constructor(Math.min(...arrays.map(x => x.length)) * arrays.length);
+		for (let i = 0; i < output.length; i++) {
+			output[i] = arrays[i % arrays.length][Math.floor(i / arrays.length)];
+		}
+		return output;
+	}
+
+	/**
 	 * A utility class that either operates on arrays through static methods, or provides information about an array through an instance.
 	 * @param arr The array to get information about.
 	 */
@@ -321,20 +337,6 @@ export class ArrOp<T extends NumberArray> {
 	get sum(): number {
 		return ArrOp.sum(this.arr);
 	}
-}
-
-/**
- * Interleave two Arrays. If the length differs, 0s will be added for the missing entries of the shorter array.
- * @param arr1 The first arr (this will be the first index of the resulting arr).
- * @param arr2 The second arr (this will be the last index of the resulting arr).
- */
-export function interleaveArrs<T>(arr1: ArrayLike<T>, arr2: ArrayLike<T>): T[] {
-	const out = new Array(Math.max(arr1.length, arr2.length) * 2);
-	for (let i = 0; i < out.length; i += 2) {
-		out[i] = arr1[Math.floor(i / 2)] ?? 0;
-		out[i + 1] = arr2[Math.floor(i / 2)] ?? 0;
-	}
-	return out;
 }
 
 /**
