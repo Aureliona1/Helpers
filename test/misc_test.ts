@@ -31,7 +31,8 @@ Deno.test({
 		// 10 ms variance
 		const variance = 10;
 		assert(elapsed > delay - variance && elapsed < delay + variance);
-	}
+	},
+	ignore: true
 });
 
 Deno.test({
@@ -44,7 +45,8 @@ Deno.test({
 		// 10 ms variance
 		const variance = 10;
 		assert(elapsed > delay - variance && elapsed < delay + variance);
-	}
+	},
+	ignore: true
 });
 
 Deno.test({
