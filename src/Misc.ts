@@ -243,7 +243,7 @@ export function compare<T>(a: T, b: T): boolean {
  * A two-way map is a map that can be accessed by its keys or by its values.
  * If a value is used as a key, it will return the corresponding key.
  */
-export class TwoWayMap<K extends RecordKey, V extends RecordKey> {
+export class TwoWayMap<const K extends RecordKey, const V extends RecordKey> {
 	/**
 	 * Internal map that contains the reversed {value, key} mappings.
 	 * Only use this for referencing key/value types.
@@ -269,14 +269,5 @@ export class TwoWayMap<K extends RecordKey, V extends RecordKey> {
 	 */
 	revGet(value: V): K {
 		return this.reverseMap[value];
-	}
-	/**
-	 * Update a value in the map, this cannot be used to add new entries, only update old ones.
-	 * @param key The updated key in the map.
-	 * @param value The updated value in the map.
-	 */
-	set(key: K, value: V) {
-		this.map[key] = value;
-		this.reverseMap[value] = key;
 	}
 }

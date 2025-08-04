@@ -102,8 +102,5 @@ Deno.test({
 		const m = new TwoWayMap({ a: 1, b: 2 });
 		assert(m.get("a") === 1);
 		assert(m.revGet(2) === "b");
-		m.set("a", 2);
-		assert(m.get("a") === 2);
-		assert(m.revGet(2) === "a");
 	}
 });
