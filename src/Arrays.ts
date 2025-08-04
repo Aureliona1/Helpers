@@ -343,7 +343,7 @@ export class ArrOp<T extends NumberArray> {
  * Concatenate several typed arrays. The arrays must all be the same type.
  * @param arrays The list of arrays to concatenate.
  */
-export function concatTypedArray<T extends TypedArray>(...arrays: T[]): T {
+export function concatTypedArrays<T extends TypedArray>(...arrays: T[]): T {
 	const newLength = arrays.reduce((sum, b) => sum + b.length, 0);
 	const Constructor = arrays[0].constructor as {
 		new (length: number): T;

@@ -1,4 +1,4 @@
-import { arrFromFunction, ArrOp, arrRem, concatTypedArray, RandomArray } from "../src/Arrays.ts";
+import { arrFromFunction, ArrOp, arrRem, concatTypedArrays, RandomArray } from "../src/Arrays.ts";
 import { compare } from "../src/Misc.ts";
 import { assert } from "./assert.ts";
 
@@ -197,6 +197,6 @@ Deno.test({
 Deno.test({
 	name: "Concat Typed Array",
 	fn: () => {
-		assert(compare(concatTypedArray(new Uint8Array([1, 2, 3]), new Uint8Array([4, 5, 6])), new Uint8Array([1, 2, 3, 4, 5, 6])));
+		assert(compare(concatTypedArrays(new Uint8Array([1, 2, 3]), new Uint8Array([4, 5, 6])), new Uint8Array([1, 2, 3, 4, 5, 6])));
 	}
 });
