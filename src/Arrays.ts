@@ -304,9 +304,13 @@ export class ArrOp<T extends NumberArray> {
 	}
 
 	/**
-	 * O(n^2) de-duplication function on any writable ArrayLike.
+	 * O(n^2) de-duplication function on any writable ArrayLike. The function will always return the last instance of a duplicate item in the array.
 	 * @param array The array to de-duplicate.
-	 * @param condition The condition to check for duplication. If this returns falsey value, the item as the first argument will be consiered as unique and will appear in the result. (Default - {@link compare compare(a, b)})
+	 * @param condition The condition to check for duplication. If this returns truthy value, then the value is considered a duplicate. (Default - {@link compare compare(a, b)})
+	 * @example
+	 * ```ts
+	 * ArrOp.deDuplicateFull([1, 2, 3, 4, 5, 4, 3, 2, 1]) // [5, 4, 3, 2, 1]
+	 * ```
 	 */
 	static deDuplicateFull<V, T extends WritableArrayLike<V>>(array: T, condition: (a: V, b: V) => boolean = (a, b) => compare(a, b)): T {
 		const Constructor = array.constructor as {
