@@ -281,9 +281,9 @@ export class ArrOp<T extends NumberArray> {
 	 * O(n) de-dplication function on any writeable ArrayLike. This function uses the string representation of the contents of the array, so it is much quicker than a full de-duplication, however it may be error prone.
 	 * @param array The array to de-duplicate.
 	 */
-	static deDuplicateLite<V>(array: WritableArrayLike<V>): WritableArrayLike<V> {
+	static deDuplicateLite<V, T extends WritableArrayLike<V>>(array: T): T {
 		const Constructor = array.constructor as {
-			new (length: number): WritableArrayLike<V>;
+			new (length: number): T;
 		};
 		const rec: Record<string, boolean> = {};
 		for (let i = 0; i < array.length; i++) {
@@ -312,9 +312,9 @@ export class ArrOp<T extends NumberArray> {
 	 * ArrOp.deDuplicateFull([1, 2, 3, 4, 5, 4, 3, 2, 1]) // [5, 4, 3, 2, 1]
 	 * ```
 	 */
-	static deDuplicateFull<V>(array: WritableArrayLike<V>, condition: (a: V, b: V) => boolean = (a, b) => compare(a, b)): WritableArrayLike<V> {
+	static deDuplicateFull<V, T extends WritableArrayLike<V>>(array: WritableArrayLike<V>, condition: (a: V, b: V) => boolean = (a, b) => compare(a, b)): T {
 		const Constructor = array.constructor as {
-			new (length: number): WritableArrayLike<V>;
+			new (length: number): T;
 		};
 		const unique: V[] = [];
 		for (let i = 0; i < array.length; i++) {
