@@ -1,7 +1,8 @@
 // deno-lint-ignore-file no-explicit-any
 import type { TypedArray } from "@aurellis/helpers";
 import { decimals, lerp, random } from "./Numbers.ts";
-import type { Easing, IntTypedArray, NumberArray, UintTypedArray } from "./Types.ts";
+import type { Easing, IntTypedArray, NumberArray, RecordKey, UintTypedArray, WritableArrayLike } from "./Types.ts";
+import { compare } from "./Misc.ts";
 
 /**
  * Remove entries from an array and return the modified array. Affects the original array, therefore you do not need to reassign.
@@ -272,6 +273,58 @@ export class ArrOp<T extends NumberArray> {
 		const output = new Constructor(Math.min(...arrays.map(x => x.length)) * arrays.length);
 		for (let i = 0; i < output.length; i++) {
 			output[i] = arrays[i % arrays.length][Math.floor(i / arrays.length)];
+		}
+		return output;
+	}
+
+	/**
+	 * O(n) de-dplication function on any writeable ArrayLike. This function uses the string representation of the contents of the array, so it is much quicker than a full de-duplication, however it may be error prone.
+	 * @param array The array to de-duplicate.
+	 */
+	static deDuplicateLite<V, T extends WritableArrayLike<V>>(array: T): T {
+		const Constructor = array.constructor as {
+			new (length: number): T;
+		};
+		const rec: Record<string, boolean> = {};
+		for (let i = 0; i < array.length; i++) {
+			rec[`${array[i]}`] = true;
+		}
+		const unique: V[] = [];
+		for (let i = 0; i < array.length; i++) {
+			if (rec[`${array[i]}`]) {
+				unique.push(array[i]);
+				rec[`${array[i]}`] = false;
+			}
+		}
+		const output = new Constructor(unique.length);
+		for (let i = 0; i < unique.length; i++) {
+			output[i] = unique[i];
+		}
+		return output;
+	}
+
+	/**
+	 * O(n^2) de-duplication function on any writable ArrayLike.
+	 * @param array The array to de-duplicate.
+	 * @param condition The condition to check for duplication. If this returns falsey value, the item as the first argument will be consiered as unique and will appear in the result. (Default - {@link compare compare(a, b)})
+	 */
+	static deDuplicateFull<V, T extends WritableArrayLike<V>>(array: T, condition: (a: V, b: V) => boolean = (a, b) => compare(a, b)): T {
+		const Constructor = array.constructor as {
+			new (length: number): T;
+		};
+		const unique: V[] = [];
+		for (let i = 0; i < array.length; i++) {
+			let duplicate = false;
+			for (let j = i + 1; j < array.length && !duplicate; j++) {
+				duplicate = condition(array[i], array[j]);
+			}
+			if (!duplicate) {
+				unique.push(array[i]);
+			}
+		}
+		const output = new Constructor(unique.length);
+		for (let i = 0; i < unique.length; i++) {
+			output[i] = unique[i];
 		}
 		return output;
 	}

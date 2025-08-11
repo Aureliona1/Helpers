@@ -49,3 +49,11 @@ export type TypedArray = UintTypedArray | IntTypedArray | FloatTypedArray;
  * A type representing any array type that contains numbers.
  */
 export type NumberArray = TypedArray | Array<number>;
+
+/**
+ * An ArrayLike with writable indices.
+ */
+export type WritableArrayLike<T> = {
+	readonly length: number;
+	[n: number]: T;
+};
