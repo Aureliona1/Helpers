@@ -1,4 +1,5 @@
 import { arrFromFunction, ArrOp, arrRem, concatTypedArrays, RandomArray } from "../src/Arrays.ts";
+import { clog } from "../src/Console.ts";
 import { compare } from "../src/Misc.ts";
 import { assert } from "./assert.ts";
 
@@ -198,5 +199,48 @@ Deno.test({
 	name: "Concat Typed Array",
 	fn: () => {
 		assert(compare(concatTypedArrays(new Uint8Array([1, 2, 3]), new Uint8Array([4, 5, 6])), new Uint8Array([1, 2, 3, 4, 5, 6])));
+	}
+});
+
+Deno.test({
+	name: "De-duplicate Lite",
+	fn: () => {
+		assert(compare(ArrOp.deDuplicateLite([1, 2, 3, 4, 5, 4, 3, 2, 1]), [1, 2, 3, 4, 5]));
+		assert(
+			compare(
+				ArrOp.deDuplicateLite([
+					[1, 2],
+					[1, 2],
+					[3, 4]
+				]),
+				[
+					[1, 2],
+					[3, 4]
+				]
+			)
+		);
+	}
+});
+
+Deno.test({
+	name: "De-duplicate Full",
+	fn: () => {
+		assert(compare(ArrOp.deDuplicateFull([1, 2, 3, 4, 5, 4, 3, 2, 1]), [5, 4, 3, 2, 1]));
+		assert(
+			compare(
+				ArrOp.deDuplicateFull(
+					[
+						[1, 2],
+						[2, 2],
+						[3, 4]
+					],
+					(a, b) => a[1] === b[1]
+				),
+				[
+					[2, 2],
+					[3, 4]
+				]
+			)
+		);
 	}
 });
