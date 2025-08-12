@@ -164,14 +164,14 @@ export class MemoryCache {
 	/**
 	 * Get a list of the named entries in the cache.
 	 */
-	get entries() {
+	get entries(): string[] {
 		return Object.keys(this._store);
 	}
 
 	/**
 	 * Get a list of the named entries and their signatures in the cache.
 	 */
-	get signatures() {
+	get signatures(): [string, any][] {
 		return Object.entries(this._store).map(x => [x[0], x[1].signature]);
 	}
 
