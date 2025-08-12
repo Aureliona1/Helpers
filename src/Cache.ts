@@ -1,6 +1,6 @@
 // deno-lint-ignore-file no-explicit-any
 import { clog } from "./Console.ts";
-import { ensureFile } from "./Misc.ts";
+import { compare, ensureFile } from "./Misc.ts";
 
 /**
  * Access and modify a cache file.
@@ -96,5 +96,107 @@ export class Cache {
 			this.write(name, backup());
 		}
 		return this.read(name);
+	}
+}
+
+/**
+ * Access and modify an in-memory cache to store frequently used data. Data is defined by a name and a signature that identifies the state of the data.
+ * @example
+ * The signature can represent the parameters that were passed into a function that does a lot of work, but may have the same parameters multiple times.
+ *
+ * ```ts
+ * const addCache = new MemoryCache();
+ * function slowAdd(a: number, b: number): number {
+ * 	return addCache.ensure("result", [a, b], () => {
+ * 		// Actual function implementation here.
+ * 		sleepSync(10000);
+ * 		return a + b;
+ * 	},
+ * 		// If the same arguments, or their reverse, are passed in.
+ * 		(old, new) => compare(old, new) || compare(old.reverse(), new)
+ * 	);
+ * }
+ * ```
+ */
+export class MemoryCache {
+	private _store: Record<string, { signature: any; data: any }> = {};
+
+	/**
+	 * Read the cached data for an entry name, ignoring signature.
+	 * @param entry The entry to read.
+	 */
+	readData<T>(entry = ""): T {
+		if (!(entry in this._store)) {
+			clog(`${entry} does not exist in the cache, undefined will be returned...`, "Warning", "Memory Cache");
+		}
+		return this._store[entry].data as T;
+	}
+
+	/**
+	 * Read the cached signature for an entry name, ignoring the data.
+	 * @param entry The entry to read.
+	 */
+	readSignature<T>(entry = ""): T {
+		if (!(entry in this._store)) {
+			clog(`${entry} does not exist in the cache, undefined will be returned...`, "Warning", "Memory Cache");
+		}
+		return this._store[entry].signature as T;
+	}
+
+	/**
+	 * Write a new entry, or update an existing one with the same name.
+	 * @param entry The name of the entry to write.
+	 * @param signature The signature of the entry.
+	 * @param data The data to cache.
+	 */
+	write(entry = "", signature: any, data: any) {
+		this._store[entry] = { signature, data };
+	}
+
+	/**
+	 * Delete an entry from the cache.
+	 * @param entry The entry to delete.
+	 */
+	delete(entry = "") {
+		delete this._store[entry];
+	}
+
+	/**
+	 * Get a list of the named entries in the cache.
+	 */
+	get entries() {
+		return Object.keys(this._store);
+	}
+
+	/**
+	 * Get a list of the named entries and their signatures in the cache.
+	 */
+	get signatures() {
+		return Object.entries(this._store).map(x => [x[0], x[1].signature]);
+	}
+
+	/**
+	 * Clear the cache.
+	 */
+	clear() {
+		this._store = {};
+	}
+
+	/**
+	 * Get the cached data of an item if the signatures match, or add the item to the cache if it is invalid.
+	 * @param entry The name of the item.
+	 * @param signature The signature to match on the cached item, or to update to if invalid.
+	 * @param generator A function that generates the item's data if the signatures don't match.
+	 * @param compareFunc A custom function to use to compare the old signature with the new one.
+	 */
+	ensure<T, S>(entry = "", signature: S, generator: () => T, compareFunc: (cachedSignature: S, newSignature: S) => boolean = (a, b) => compare(a, b)): T {
+		if (entry in this._store) {
+			if (compareFunc(this.readSignature<S>(entry), signature)) {
+				return this.readData<T>(entry);
+			}
+		}
+		const data = generator();
+		this.write(entry, signature, data);
+		return data;
 	}
 }
