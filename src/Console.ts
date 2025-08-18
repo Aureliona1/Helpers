@@ -1,5 +1,6 @@
 import { sleepSync } from "./Misc.ts";
 import { decimals, msToTimeString } from "./Numbers.ts";
+import type { ClogSettings } from "./Types.ts";
 
 /**
  * A string containing the ANSI escape code to clear the previous line in the console.
@@ -92,11 +93,21 @@ export function fpsRepeat(rep: number, fps: number, c: (i: number) => void) {
  */
 export const rgb = (r: number, g: number, b: number, bg = false): string => "\x1b[" + (bg ? 48 : 38) + ";2;" + (Math.round(r) % 256) + ";" + (Math.round(g) % 256) + ";" + (Math.round(b) % 256) + "m";
 
-/**
- * The time format used by the clog function.
- */
-export let clogTimeFormat: "System Clock" | "Script Run Time" = "System Clock";
 const scriptStartTime = Date.now();
+let globalClogSettings: ClogSettings = {
+	timeFormat: "System Time",
+	logSymbol: "*",
+	warnSymbol: "!",
+	errorSymbol: "!"
+};
+
+/**
+ * Update the settings that {@link clog} uses for logging.
+ * @param newSettings A partial clog settings object that indicates the properties to update.
+ */
+export function clogSettingsUpdate(newSettings: Partial<ClogSettings>) {
+	globalClogSettings = { ...globalClogSettings, ...newSettings };
+}
 
 /**
  * Log a message to the console with prepended information about the source, type, and timestamp of the log.
@@ -107,18 +118,18 @@ const scriptStartTime = Date.now();
 // deno-lint-ignore no-explicit-any
 export function clog(msg: any, error: "Log" | "Warning" | "Error" = "Log", source = "main") {
 	const time = () => {
-		switch (clogTimeFormat) {
-			case "System Clock":
+		switch (globalClogSettings.timeFormat) {
+			case "System Time":
 				return new Date().toTimeString().substring(0, 8);
-			case "Script Run Time":
+			case "This Script Run":
 				return msToTimeString(Date.now() - scriptStartTime);
 		}
 	};
 	if (error == "Warning") {
-		console.warn(`${rgb(255, 255, 0)}[!] \x1b[90m[${time()}] \x1b[90m[${source}] ${rgb(255, 255, 0)}WARNING:\x1b[0m`, msg);
+		console.warn(`${rgb(255, 255, 0)}[${globalClogSettings.warnSymbol}] \x1b[90m[${time()}] \x1b[90m[${source}] ${rgb(255, 255, 0)}WARNING:\x1b[0m`, msg);
 	} else if (error == "Error") {
-		console.error(`${rgb(255, 0, 0)}[!] \x1b[90m[${time()}] \x1b[90m[${source}] ${rgb(255, 0, 0)}ERROR:\x1b[0m`, msg);
+		console.error(`${rgb(255, 0, 0)}[${globalClogSettings.errorSymbol}] \x1b[90m[${time()}] \x1b[90m[${source}] ${rgb(255, 0, 0)}ERROR:\x1b[0m`, msg);
 	} else {
-		console.log(`\x1b[34m[*] \x1b[90m[${time()}] \x1b[90m[${source}]\x1b[0m`, msg);
+		console.log(`\x1b[34m[${globalClogSettings.logSymbol}] \x1b[90m[${time()}] \x1b[90m[${source}]\x1b[0m`, msg);
 	}
 }

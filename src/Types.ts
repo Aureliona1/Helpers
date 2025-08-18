@@ -57,3 +57,13 @@ export type WritableArrayLike<T> = {
 	readonly length: number;
 	[n: number]: T;
 };
+
+/**
+ * Settings format for the clog function.
+ */
+export type ClogSettings = {
+	timeFormat: "System Time" | "This Script Run";
+	logSymbol: string;
+	warnSymbol: string;
+	errorSymbol: string;
+};
