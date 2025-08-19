@@ -113,7 +113,7 @@ export function byteRgbToHsv(rgb: Uint8Array): Uint8Array {
  * - `Deno.read` variants will work on this path.
  * @param path The path to the path to check.
  */
-export function pathCanBeAccessed(path: string): boolean {
+export function pathAccessibleSync(path: string): boolean {
 	try {
 		Deno.statSync(path);
 		return true;
@@ -123,15 +123,35 @@ export function pathCanBeAccessed(path: string): boolean {
 }
 
 /**
+ * Check whether a file or directory path can be accessed.
+ *
+ * This ensures:
+ *
+ * - The path exists
+ * - The path has read permissions
+ * - The directory tree to the path has read permissions
+ * - `Deno.read` variants will work on this path.
+ * @param path The path to the path to check.
+ */
+export async function pathAccessible(path: string): Promise<boolean> {
+	try {
+		await Deno.stat(path);
+		return true;
+	} catch (_) {
+		return false;
+	}
+}
+
+/**
  * Ensures that a dir exists.
  */
-export function ensureDir(...paths: string[]) {
+export function ensureDirSync(...paths: string[]) {
 	paths.forEach(path => {
 		path = path.replaceAll("\\", "/");
 		const dirs = path.split("/");
 		let accumulator = dirs[0];
 		for (let i = 1; i <= dirs.length; accumulator += `/${dirs[i++]}`) {
-			if (!pathCanBeAccessed(accumulator)) {
+			if (!pathAccessibleSync(accumulator)) {
 				try {
 					Deno.mkdirSync(accumulator);
 				} catch (e) {
@@ -143,23 +163,68 @@ export function ensureDir(...paths: string[]) {
 }
 
 /**
+ * Ensures that a dir exists.
+ */
+export async function ensureDir(...paths: string[]) {
+	for (let i = 0; i < paths.length; i++) {
+		const path = paths[i].replaceAll("\\", "/");
+		const dirs = path.split("/");
+		let accumulator = dirs[0];
+		for (let i = 1; i <= dirs.length; accumulator += `/${dirs[i++]}`) {
+			if (!(await pathAccessible(accumulator))) {
+				try {
+					await Deno.mkdir(accumulator);
+				} catch (e) {
+					clog(e, "Error", "ensureDir");
+				}
+			}
+		}
+	}
+}
+
+/**
  * Ensure that a file exists, the path to the file can be many directories deep and these directories will be created if needed.
  * @param path The path to the file to ensure.
  * @param contents The contents to place in the file if it needs to be created.
  */
-export function ensureFile(path: string, contents: string | Uint8Array = new Uint8Array()) {
+export function ensureFileSync(path: string, contents: string | Uint8Array = new Uint8Array()) {
 	path = path.replaceAll("\\", "/");
 	let dir = path.split("/");
 	dir = dir.slice(0, dir.length - 1);
 	if (dir.length) {
-		ensureDir(dir.join("/") + "/");
+		ensureDirSync(dir.join("/") + "/");
 	}
-	if (!pathCanBeAccessed(path)) {
+	if (!pathAccessibleSync(path)) {
 		try {
 			if (typeof contents == "string") {
 				Deno.writeTextFileSync(path, contents);
 			} else {
 				Deno.writeFileSync(path, contents);
+			}
+		} catch (e) {
+			clog(e, "Error", "ensureFile");
+		}
+	}
+}
+
+/**
+ * Ensure that a file exists, the path to the file can be many directories deep and these directories will be created if needed.
+ * @param path The path to the file to ensure.
+ * @param contents The contents to place in the file if it needs to be created.
+ */
+export async function ensureFile(path: string, contents: string | Uint8Array = new Uint8Array()) {
+	path = path.replaceAll("\\", "/");
+	let dir = path.split("/");
+	dir = dir.slice(0, dir.length - 1);
+	if (dir.length) {
+		await ensureDir(dir.join("/") + "/");
+	}
+	if (!(await pathAccessible(path))) {
+		try {
+			if (typeof contents == "string") {
+				await Deno.writeTextFile(path, contents);
+			} else {
+				await Deno.writeFile(path, contents);
 			}
 		} catch (e) {
 			clog(e, "Error", "ensureFile");

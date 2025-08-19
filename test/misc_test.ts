@@ -1,4 +1,4 @@
-import { byteHsvToRgb, byteRgbToHsv, compare, deepCopy, ensureDir, hsv2rgb, pathCanBeAccessed, rgb2hsv, sleep, sleepSync, toArray, TwoWayMap } from "../src/Misc.ts";
+import { byteHsvToRgb, byteRgbToHsv, compare, deepCopy, hsv2rgb, rgb2hsv, sleep, sleepSync, toArray, TwoWayMap } from "../src/Misc.ts";
 import { assert } from "./assert.ts";
 
 Deno.test({
