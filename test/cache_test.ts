@@ -1,5 +1,5 @@
 import { Cache } from "../src/Cache.ts";
-import { compare, pathAccessible, pathAccessibleSync } from "../src/Misc.ts";
+import { compare, pathAccessible } from "../src/Misc.ts";
 import { assert } from "./assert.ts";
 
 const path = "test/cache.json";
@@ -28,7 +28,7 @@ Deno.test({
 Deno.test({
 	name: "Cache Entries",
 	fn: async () => {
-		assert((await new Cache(path).entries()).includes("test"));
+		assert(new Cache(path).entries.includes("test"));
 	}
 });
 

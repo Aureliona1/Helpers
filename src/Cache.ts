@@ -1,6 +1,6 @@
 // deno-lint-ignore-file no-explicit-any
 import { clog } from "./Console.ts";
-import { compare, ensureFile } from "./Misc.ts";
+import { compare, ensureFile, ensureFileSync } from "./Misc.ts";
 
 /**
  * Access and modify a cache file.
@@ -12,6 +12,17 @@ export class Cache {
 	private async ensureFile() {
 		try {
 			await ensureFile(this.fileName, "{}");
+		} catch (e) {
+			clog("Error ensuring cache file, check your read and write permissions...", "Error", "Cache");
+			clog(e, "Error", "Cache");
+		}
+	}
+	/**
+	 * Create an empty cache if absent.
+	 */
+	private ensureFileSync() {
+		try {
+			ensureFileSync(this.fileName, "{}");
 		} catch (e) {
 			clog("Error ensuring cache file, check your read and write permissions...", "Error", "Cache");
 			clog(e, "Error", "Cache");
@@ -38,17 +49,45 @@ export class Cache {
 		return {};
 	}
 	/**
+	 * Read and parse the contents of the cache file.
+	 */
+	private readFileSync(): Record<string, any> {
+		this.ensureFileSync();
+		let raw = "{}";
+		try {
+			raw = Deno.readTextFileSync(this.fileName);
+		} catch (e) {
+			clog("Error reading cache, check your read permissions...", "Error", "Cache");
+			clog(e, "Error", "Cache");
+		}
+		try {
+			return JSON.parse(raw);
+		} catch (e) {
+			clog("Error parsing cache contents, consider clearing the cache and trying again...", "Error", "Cache");
+			clog(e, "Error", "Cache");
+		}
+		return {};
+	}
+	/**
 	 * Access and modify a cache file.
 	 * @param fileName The name of the cache file (Default - cache.json).
 	 */
 	constructor(public readonly fileName = "cache.json") {}
 	/**
 	 * Read the value at a name in the cache.
-	 * @param name The name to read, returns undefined if this name doesn't exist in the cache.
+	 * @param entry The name to read, returns undefined if this name doesn't exist in the cache.
 	 */
-	async read<T>(name: string): Promise<T> {
+	async read<T>(entry: string): Promise<T> {
 		const cache = await this.readFile();
-		return cache[name];
+		return cache[entry];
+	}
+	/**
+	 * Read the value at a name in the cache.
+	 * @param entry The name to read, returns undefined if this name doesn't exist in the cache.
+	 */
+	readSync<T>(entry: string): T {
+		const cache = this.readFileSync();
+		return cache[entry];
 	}
 	/**
 	 * Write an entry into the cache. If the data param is undefined, it will delete the entry with the given name.
@@ -70,6 +109,25 @@ export class Cache {
 		}
 	}
 	/**
+	 * Write an entry into the cache. If the data param is undefined, it will delete the entry with the given name.
+	 * @param name The name of the entry to overwrite.
+	 * @param data The data to overwrite with.
+	 */
+	writeSync(entry: string, data?: any) {
+		const cache = this.readFileSync();
+		if (typeof data == "undefined") {
+			delete cache[entry];
+		} else {
+			cache[entry] = data;
+		}
+		try {
+			Deno.writeTextFileSync(this.fileName, JSON.stringify(cache));
+		} catch (e) {
+			clog("Error writing cache file, check your write permissions...", "Error", "Cache");
+			clog(e, "Error", "Cache");
+		}
+	}
+	/**
 	 * Clear all entries in the cache.
 	 */
 	async clear() {
@@ -81,21 +139,49 @@ export class Cache {
 		}
 	}
 	/**
+	 * Clear all entries in the cache.
+	 */
+	clearSync() {
+		try {
+			Deno.removeSync(this.fileName);
+		} catch (e) {
+			clog("Error clearing cache, check your write permissions...", "Error", "Cache");
+			clog(e, "Error", "Cache");
+		}
+	}
+	/**
 	 * Return an array of the adressable entries in the cache.
 	 */
-	async entries(): Promise<string[]> {
+	async entriesAsync(): Promise<string[]> {
 		return Object.getOwnPropertyNames(await this.readFile());
 	}
 	/**
-	 * Ensure that some data exists in the cache, and return the data.
-	 * @param name The entry to check for.
-	 * @param backup A function that returns the data if the entry does not exist. This will only be run if it is needed.
+	 * Get an array of the entry keys in the cache.
 	 */
-	async ensure<T>(name: string, backup: () => T): Promise<T> {
-		if (!(await this.entries()).includes(name)) {
-			await this.write(name, backup());
+	get entries(): string[] {
+		return Object.getOwnPropertyNames(this.readFileSync());
+	}
+	/**
+	 * Ensure that some data exists in the cache, and return the data.
+	 * @param entry The entry to check for.
+	 * @param generator A function that returns the data if the entry does not exist. This will only be run if it is needed.
+	 */
+	async ensure<T>(entry: string, generator: () => T): Promise<T> {
+		if (!(await this.entriesAsync()).includes(entry)) {
+			await this.write(entry, generator());
 		}
-		return await this.read(name);
+		return await this.read(entry);
+	}
+	/**
+	 * Ensure that some data exists in the cache, and return the data.
+	 * @param entry The entry to check for.
+	 * @param generator A function that returns the data if the entry does not exist. This will only be run if it is needed.
+	 */
+	ensureSync<T>(entry: string, generator: () => T): T {
+		if (!this.entries.includes(entry)) {
+			this.writeSync(entry, generator());
+		}
+		return this.readSync(entry);
 	}
 }
 
