@@ -146,38 +146,26 @@ export async function pathAccessible(path: string): Promise<boolean> {
  * Ensures that a dir exists.
  */
 export function ensureDirSync(...paths: string[]) {
-	paths.forEach(path => {
-		path = path.replaceAll("\\", "/");
-		const dirs = path.split("/");
-		let accumulator = dirs[0];
-		for (let i = 1; i <= dirs.length; accumulator += `/${dirs[i++]}`) {
-			if (!pathAccessibleSync(accumulator)) {
-				try {
-					Deno.mkdirSync(accumulator);
-				} catch (e) {
-					clog(e, "Error", "ensureDir");
-				}
-			}
+	for (const raw of paths) {
+		const path = raw.replaceAll("\\", "/");
+		try {
+			Deno.mkdirSync(path, { recursive: true });
+		} catch (e) {
+			clog(e, "Error", "ensureDir");
 		}
-	});
+	}
 }
 
 /**
  * Ensures that a dir exists.
  */
 export async function ensureDir(...paths: string[]) {
-	for (let i = 0; i < paths.length; i++) {
-		const path = paths[i].replaceAll("\\", "/");
-		const dirs = path.split("/");
-		let accumulator = dirs[0];
-		for (let i = 1; i <= dirs.length; accumulator += `/${dirs[i++]}`) {
-			if (!(await pathAccessible(accumulator))) {
-				try {
-					await Deno.mkdir(accumulator);
-				} catch (e) {
-					clog(e, "Error", "ensureDir");
-				}
-			}
+	for (const raw of paths) {
+		const path = raw.replaceAll("\\", "/");
+		try {
+			await Deno.mkdir(path, { recursive: true });
+		} catch (e) {
+			clog(e, "Error", "ensureDir");
 		}
 	}
 }
@@ -189,19 +177,14 @@ export async function ensureDir(...paths: string[]) {
  */
 export function ensureFileSync(path: string, contents: string | Uint8Array = new Uint8Array()) {
 	path = path.replaceAll("\\", "/");
-	let dir = path.split("/");
-	dir = dir.slice(0, dir.length - 1);
-	if (dir.length) {
-		ensureDirSync(dir.join("/") + "/");
+	const dir = path.substring(0, path.lastIndexOf("/"));
+	if (dir) {
+		ensureDirSync(dir);
 	}
-	if (!pathAccessibleSync(path)) {
-		try {
-			if (typeof contents == "string") {
-				Deno.writeTextFileSync(path, contents);
-			} else {
-				Deno.writeFileSync(path, contents);
-			}
-		} catch (e) {
+	try {
+		Deno.writeFileSync(path, typeof contents === "string" ? new TextEncoder().encode(contents) : contents, { createNew: true });
+	} catch (e) {
+		if (!(e instanceof Deno.errors.AlreadyExists)) {
 			clog(e, "Error", "ensureFile");
 		}
 	}
@@ -214,19 +197,14 @@ export function ensureFileSync(path: string, contents: string | Uint8Array = new
  */
 export async function ensureFile(path: string, contents: string | Uint8Array = new Uint8Array()) {
 	path = path.replaceAll("\\", "/");
-	let dir = path.split("/");
-	dir = dir.slice(0, dir.length - 1);
-	if (dir.length) {
-		await ensureDir(dir.join("/") + "/");
+	const dir = path.substring(0, path.lastIndexOf("/"));
+	if (dir) {
+		await ensureDir(dir);
 	}
-	if (!(await pathAccessible(path))) {
-		try {
-			if (typeof contents == "string") {
-				await Deno.writeTextFile(path, contents);
-			} else {
-				await Deno.writeFile(path, contents);
-			}
-		} catch (e) {
+	try {
+		await Deno.writeFile(path, typeof contents === "string" ? new TextEncoder().encode(contents) : contents, { createNew: true });
+	} catch (e) {
+		if (!(e instanceof Deno.errors.AlreadyExists)) {
 			clog(e, "Error", "ensureFile");
 		}
 	}
