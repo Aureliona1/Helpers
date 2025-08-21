@@ -151,7 +151,9 @@ export function ensureDirSync(...paths: string[]) {
 		try {
 			Deno.mkdirSync(path, { recursive: true });
 		} catch (e) {
-			clog(e, "Error", "ensureDir");
+			if (!(e instanceof Deno.errors.AlreadyExists)) {
+				clog(e, "Error", "ensureDir");
+			}
 		}
 	}
 }
@@ -165,7 +167,9 @@ export async function ensureDir(...paths: string[]) {
 		try {
 			await Deno.mkdir(path, { recursive: true });
 		} catch (e) {
-			clog(e, "Error", "ensureDir");
+			if (!(e instanceof Deno.errors.AlreadyExists)) {
+				clog(e, "Error", "ensureDir");
+			}
 		}
 	}
 }
