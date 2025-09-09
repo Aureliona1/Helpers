@@ -67,3 +67,20 @@ export type ClogSettings = {
 	warnSymbol: string;
 	errorSymbol: string;
 };
+
+/**
+ * A list item for a singly-linked list.
+ */
+export type SinglyLinkedItem<T> = {
+	value: T;
+	next: SinglyLinkedItem<T> | null;
+};
+
+/**
+ * A list item for a doubly-linked list.
+ */
+export type DoublyLinkedItem<T> = {
+	value: T;
+	next: DoublyLinkedItem<T> | null;
+	previous: DoublyLinkedItem<T> | null;
+};
