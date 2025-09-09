@@ -3,7 +3,7 @@ import type { DoublyLinkedItem, SinglyLinkedItem } from "../Types.ts";
 /**
  * A linear data structure where nodes are connected only to the next one via a reference.
  */
-export class LinkedList<T> implements Iterable<T> {
+export class LinkedList<T> {
 	private _length = 0;
 	private _head: SinglyLinkedItem<T> | null = null;
 
@@ -19,7 +19,7 @@ export class LinkedList<T> implements Iterable<T> {
 	/**
 	 * Add a value to the list at a set index. If the index exceeds the length of the list, value will be appended to the end.
 	 * @param value The value to add to the list.
-	 * @param index The zero-based index to insert the value at.
+	 * @param index The zero-based index to insert the value at. (Default - 0)
 	 */
 	add(value: T, index = 0) {
 		if (this._length === 0) {
@@ -126,20 +126,16 @@ export class LinkedList<T> implements Iterable<T> {
 	}
 
 	/**
-	 * Generic iterator.
+	 * Get the list as an array.
 	 */
-	[Symbol.iterator](): Iterator<T> {
-		let current = this._head;
-		return {
-			next(): IteratorResult<T> {
-				if (current) {
-					const value = current.value;
-					current = current.next;
-					return { value, done: false };
-				}
-				return { value: undefined as T, done: true };
-			}
-		};
+	toArray(): T[] {
+		const arr = new Array(this.length);
+		let node = this._head;
+		for (let i = 0; i < arr.length && node; i++) {
+			arr[i] = node.value;
+			node = node.next;
+		}
+		return arr;
 	}
 }
 
@@ -147,7 +143,7 @@ export class LinkedList<T> implements Iterable<T> {
  * A linear data structure where nodes are connected to their neighbours by a reference.
  * Slightly faster to access and modify than a {@link LinkedList Singly-linked list}, but uses more memory.
  */
-export class LinkedListDouble<T> implements Iterable<T> {
+export class LinkedListDouble<T> {
 	private _length = 0;
 	private _start: DoublyLinkedItem<T> | null = null;
 	private _end: DoublyLinkedItem<T> | null = null;
@@ -350,19 +346,15 @@ export class LinkedListDouble<T> implements Iterable<T> {
 	}
 
 	/**
-	 * Generic iterator.
+	 * Get the list as an array.
 	 */
-	[Symbol.iterator](): Iterator<T> {
-		let current = this._start;
-		return {
-			next(): IteratorResult<T> {
-				if (current) {
-					const value = current.value;
-					current = current.next;
-					return { value, done: false };
-				}
-				return { value: undefined, done: true } as IteratorResult<T>;
-			}
-		};
+	toArray(): T[] {
+		const arr = new Array(this.length);
+		let node = this._start;
+		for (let i = 0; i < arr.length && node; i++) {
+			arr[i] = node.value;
+			node = node.next;
+		}
+		return arr;
 	}
 }
