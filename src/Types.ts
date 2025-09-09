@@ -82,5 +82,5 @@ export type SinglyLinkedItem<T> = {
 export type DoublyLinkedItem<T> = {
 	value: T;
 	next: DoublyLinkedItem<T> | null;
-	previous: DoublyLinkedItem<T> | null;
+	prev: DoublyLinkedItem<T> | null;
 };
