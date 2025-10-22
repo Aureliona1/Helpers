@@ -122,11 +122,24 @@ Deno.test({
 Deno.test({
 	name: "Array Shuffle",
 	fn: () => {
-		const shuffled = ArrOp.shuffle(arrFromFunction(10, x => x));
+		const shuffled = ArrOp.shuffle(
+			arrFromFunction(10, x => x),
+			84375
+		);
 		// Ensure that all numbers are still present.
 		assert(arrFromFunction(10, x => x).every(x => shuffled.includes(x)));
 		// Ensure that at least one number has changed position.
 		assert(shuffled.some((x, i) => x !== i));
+
+		// Repeat for a typed array
+		const typedShuffle = ArrOp.shuffle(
+			new Uint8Array(256).map((_, i) => i),
+			32842
+		);
+		// Ensure that all numbers are still present.
+		assert(arrFromFunction(256, x => x).every(x => typedShuffle.includes(x)));
+		// Ensure that at least one number has changed position.
+		assert(typedShuffle.some((x, i) => x !== i));
 	}
 });
 

@@ -182,7 +182,7 @@ export class ArrOp<T extends NumberArray> {
 			[out[a], out[b]] = [out[b], out[a]];
 		};
 		for (let i = 0; i < out.length; i++) {
-			swap(random(0, out.length, seed + i * 26436 + 1, 0), random(0, out.length, seed + i * 2636 + 134, 0));
+			swap(i, random(0, out.length, seed + i * 2321 + 453, 0));
 		}
 		return out;
 	}
