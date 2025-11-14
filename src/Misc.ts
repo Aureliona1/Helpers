@@ -17,6 +17,14 @@ export function deepCopy<T>(obj: T): T {
 		return obj.map(item => deepCopy(item)) as T;
 	}
 
+	if (ArrayBuffer.isView(obj)) {
+		if (obj instanceof DataView) {
+			return new DataView(obj.buffer.slice()) as T;
+		} else {
+			return (obj as unknown as TypedArray).slice() as T;
+		}
+	}
+
 	const copiedObj = Object.create(Object.getPrototypeOf(obj));
 	Object.keys(obj).forEach(key => {
 		(copiedObj as any)[key] = deepCopy((obj as any)[key]);
