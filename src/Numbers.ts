@@ -11,7 +11,7 @@ import * as easings from "./Easings.ts";
  */
 export function decimals<T extends string | number | any[] | Record<string, any>>(o: T, precision = 5, method: "floor" | "round" | "ceil" = "round"): T {
 	if (typeof o == "number") {
-		return (Math.[method](o * Math.pow(10, precision)) / Math.pow(10, precision)) as T;
+		return (Math[method](o * Math.pow(10, precision)) / Math.pow(10, precision)) as T;
 	} else if (!(typeof o == "number" || typeof o == "object")) {
 		return o;
 	} else if (Array.isArray(o)) {
