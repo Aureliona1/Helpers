@@ -181,10 +181,11 @@ export class ArrOp<T extends NumberArray> {
 		const swap = (a: number, b: number) => {
 			[out[a], out[b]] = [out[b], out[a]];
 		};
+		let call = 0;
 		for (let i = 0; i < out.length; i++) {
 			let r = i;
 			while (r === i) {
-				r = random(0, out.length - 1, seed + i * 2321 + 453, 0);
+				r = random(0, out.length - 1, seed + call++ * 2321 + 453, 0);
 			}
 			swap(i, r);
 		}
