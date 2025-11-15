@@ -45,14 +45,14 @@ function mulberry32(a: number): () => number {
 /**
  * Generate a random number.
  * @param min The minimun possible number to generate (inclusive).
- * @param max The maximum possible number to generate (inclusive).
+ * @param max The maximum possible number to generate (exclusive).
  * @param seed The optional seed to apply to the generator (leave blank for random).
  * @param precision (Default - 3) The number of decimals in the random number. This can be negative to round to different values, e.g., -1 will round to the nearest 10, -2 will round to the nearest 100 etc.
  * @returns Random number.
  */
 export function random(min: number, max: number, seed: number | string = Math.random(), precision = 3): number {
 	[min, max] = min > max ? [max, min] : [min, max];
-	return decimals(mulberry32(stringCodeToNumber(seed.toString()))() * (max - min) + min, precision);
+	return decimals(mulberry32(stringCodeToNumber(seed.toString()))() * (max - min) + min, precision, "floor");
 }
 
 /**

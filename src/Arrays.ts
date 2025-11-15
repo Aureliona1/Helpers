@@ -1,8 +1,8 @@
 // deno-lint-ignore-file no-explicit-any
 import type { TypedArray } from "@aurellis/helpers";
-import { decimals, lerp, random } from "./Numbers.ts";
-import type { Easing, IntTypedArray, NumberArray, RecordKey, UintTypedArray, WritableArrayLike } from "./Types.ts";
 import { compare } from "./Misc.ts";
+import { lerp, random } from "./Numbers.ts";
+import type { Easing, IntTypedArray, NumberArray, UintTypedArray, WritableArrayLike } from "./Types.ts";
 
 /**
  * Remove entries from an array and return the modified array. Affects the original array, therefore you do not need to reassign.
@@ -31,7 +31,7 @@ export class RandomArray {
 	/**
 	 * Creates an array of random numbers with a seed for reproducible results.
 	 * @param seed The seed for prng generation, leave blank to keep random.
-	 * @param range The min/max that the numbers in the array can be.
+	 * @param range The min (incl.)/max (excl.) that the numbers in the array can be.
 	 * @param length The length of the array (how many numbers to generate).
 	 * @param decimals The precision of the result (0 for integers).
 	 */
@@ -41,7 +41,7 @@ export class RandomArray {
 	 * @returns An array of random values.
 	 */
 	run(): number[] {
-		return arrFromFunction(this.length, x => decimals(random(this.range[0], this.range[1], `${this.seed}blahblah${x}`), this.decimals));
+		return arrFromFunction(this.length, x => random(this.range[0], this.range[1], `${this.seed}blahblah${x}`, this.decimals));
 	}
 	/**
 	 * Ensures that no two numbers in the array are identical. This is the slowest method on this class. Please only use it if you must.
@@ -77,7 +77,7 @@ export class RandomArray {
 			let unique = false,
 				att = NaN;
 			for (let j = 0; j < buffer && !unique; j++) {
-				att = decimals(random(this.range[0], this.range[1], `${this.seed}blah${i}blah${j}`), this.decimals);
+				att = random(this.range[0], this.range[1], `${this.seed}blah${i}blah${j}`, this.decimals);
 				unique = true;
 				for (let j = 0; j < prev.length; j++) {
 					if (att == prev[j]) {
@@ -185,7 +185,7 @@ export class ArrOp<T extends NumberArray> {
 		for (let i = 0; i < out.length; i++) {
 			let r = i;
 			while (r === i) {
-				r = random(0, out.length - 1, seed + call++ * 2321 + 453, 0);
+				r = random(0, out.length, seed + call++ * 2321 + 453, 0);
 			}
 			swap(i, r);
 		}
