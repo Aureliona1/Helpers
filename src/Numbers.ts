@@ -9,16 +9,16 @@ import * as easings from "./Easings.ts";
  * @param o The object, or number to set the precision of.
  * @param precision The number of decimals.
  */
-export function decimals<T extends string | number | any[] | Record<string, any>>(o: T, precision = 5): T {
+export function decimals<T extends string | number | any[] | Record<string, any>>(o: T, precision = 5, method: "floor" | "round" | "ceil" = "round"): T {
 	if (typeof o == "number") {
-		return (Math.round(o * Math.pow(10, precision)) / Math.pow(10, precision)) as T;
+		return (Math.[method](o * Math.pow(10, precision)) / Math.pow(10, precision)) as T;
 	} else if (!(typeof o == "number" || typeof o == "object")) {
 		return o;
 	} else if (Array.isArray(o)) {
-		(o as any[]) = o.map(x => decimals(x, precision));
+		(o as any[]) = o.map(x => decimals(x, precision, method));
 	} else {
 		Object.keys(o).forEach(key => {
-			o[key] = decimals(o[key], precision);
+			o[key] = decimals(o[key], precision, method);
 		});
 	}
 	return o;
