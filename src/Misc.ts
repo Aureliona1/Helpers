@@ -225,9 +225,9 @@ export async function ensureFile(path: string, contents: string | Uint8Array = n
 /**
  * Attempt to coerce the value into an array.
  * @param value The value to coerce.
- * @returns Array form of the input value, or empty array if coercion failed.
+ * @returns Array form of the input value, or null if coercion failed.
  */
-export function toArray(value: any): any[] {
+export function toArray(value: any): any[] | null {
 	if (Array.isArray(value)) {
 		return value;
 	}
@@ -254,7 +254,7 @@ export function toArray(value: any): any[] {
 		return result;
 	}
 
-	return [];
+	return null;
 }
 
 /**
@@ -268,7 +268,7 @@ export function compare<T>(a: T, b: T): boolean {
 		// Array
 		const arr = toArray(a);
 		const brr = toArray(b);
-		if (arr.length && brr.length) {
+		if (arr && brr) {
 			if (arr.length === brr.length) {
 				return arr.every((x, i) => compare(x, brr[i]));
 			}

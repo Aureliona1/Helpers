@@ -99,6 +99,20 @@ Deno.test({
 });
 
 Deno.test({
+	name: "Compare",
+	fn: () => {
+		assert(compare([], []));
+		assert(!compare([], [1, 2]));
+		assert(compare({}, {}));
+		const a: Record<string, number> = {};
+		assert(compare(a, {}));
+		a["hi"] = 1;
+		assert(!compare(a, {}));
+		assert(compare(a, { hi: 1 }));
+	}
+});
+
+Deno.test({
 	name: "Two-Way Map",
 	fn: () => {
 		const m = new TwoWayMap({ a: 1, b: 2 });
