@@ -264,7 +264,7 @@ export function toArray(value: any): any[] | null {
  * @param b Second thing to compare.
  */
 export function compare<T>(a: T, b: T): boolean {
-	if (typeof a === "object" && !(a instanceof Date)) {
+	if (typeof a === "object" && !(a instanceof Date) && a !== null) {
 		// Array
 		const arr = toArray(a);
 		const brr = toArray(b);

@@ -94,7 +94,7 @@ Deno.test({
 	fn: () => {
 		assert(compare(toArray(new Uint8Array([1, 2, 3, 4])), [1, 2, 3, 4]));
 		assert(compare(toArray([1, 2, 3]), [1, 2, 3]));
-		assert(compare(toArray({}), []));
+		assert(compare(toArray({}), null));
 	}
 });
 
