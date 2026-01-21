@@ -109,6 +109,9 @@ Deno.test({
 		a["hi"] = 1;
 		assert(!compare(a, {}));
 		assert(compare(a, { hi: 1 }));
+		assert(!compare({}, { a: 1 }));
+		assert(compare("a", "a"));
+		assert(!compare(1, 2));
 	}
 });
 

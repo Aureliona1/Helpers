@@ -288,7 +288,7 @@ export function compare<T>(a: T, b: T): boolean {
 		}
 		// Record / Object
 		else {
-			return Object.entries(a as Record<any, any>).every(x => compare(x[1], (b as Record<any, any>)[x[0]]));
+			return compare(Object.getOwnPropertyNames(a), Object.getOwnPropertyNames(b)) && Object.entries(a as Record<any, any>).every(x => compare(x[1], (b as Record<any, any>)[x[0]]));
 		}
 	}
 	return a === b;
