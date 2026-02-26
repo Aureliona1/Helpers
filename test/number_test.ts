@@ -1,6 +1,7 @@
+import { msToTimeString, rotateVector } from "@aurellis/helpers";
 import { arrFromFunction, ArrOp } from "../src/Arrays.ts";
 import { compare } from "../src/Misc.ts";
-import { clamp, decimals, distance, midPoint, random } from "../src/Numbers.ts";
+import { clamp, clampLoop, decimals, distance, midPoint, random } from "../src/Numbers.ts";
 import { assert } from "./assert.ts";
 
 Deno.test({
@@ -36,14 +37,15 @@ Deno.test({
 Deno.test({
 	name: "Clamp",
 	fn: () => {
-		assert(clamp(100 as number, [0, 50]) === 50);
+		const res = clamp(100, [0, 50]);
+		assert(compare(res, 50));
 	}
 });
 
 Deno.test({
 	name: "Clamp Loop",
 	fn: () => {
-		const res = clamp(100 as number, [50, 70]);
+		const res = clampLoop(100, [50, 70]);
 		assert(50 <= res && res <= 70);
 	}
 });
@@ -52,6 +54,7 @@ Deno.test({
 	name: "Distance",
 	fn: () => {
 		assert(distance([0, 0], [1, 1]) === Math.sqrt(2));
+		assert(distance([0, 0, 0], [1, 1, 1]) === Math.sqrt(3));
 	}
 });
 
@@ -59,5 +62,15 @@ Deno.test({
 	name: "Mid Point",
 	fn: () => {
 		assert(compare(midPoint([0, 0, 0], [1, 1, 1]), [1 / 2, 1 / 2, 1 / 2]));
+	}
+});
+
+Deno.test({
+	name: "Rotate Vector",
+	fn: () => {
+		// Rotate
+		assert(compare(rotateVector([0, 0, 0], [0, 0, 1], [90, 0, 0]), [0, -1, 0]));
+		// Maintains magnitude
+		assert(compare(decimals(distance(rotateVector([1, 2, 3], [5, 4, 3], [45, 90, -45]), [1, 2, 3]), 3), decimals(distance([1, 2, 3], [5, 4, 3]), 3)));
 	}
 });

@@ -1,5 +1,4 @@
 import { arrFromFunction, ArrOp, arrRem, concatTypedArrays, RandomArray } from "../src/Arrays.ts";
-import { clog } from "../src/Console.ts";
 import { compare } from "../src/Misc.ts";
 import { assert } from "./assert.ts";
 
@@ -20,6 +19,12 @@ Deno.test({
 			compare(
 				arrFromFunction(5, x => x.toString(2)),
 				["0", "1", "10", "11", "100"]
+			)
+		);
+		assert(
+			compare(
+				arrFromFunction(10, x => x),
+				Array.from(new Array(10).keys())
 			)
 		);
 	}

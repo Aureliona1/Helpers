@@ -180,11 +180,12 @@ function multiplymats(mat1: number[][], mat2: number[][]) {
 /**
  * Rotate a vector based on euler rotations. Rotations are performed in the order ZXY.
  * @param start The start position of the vector. The vector will be rotated around this position.
- * @param end The end position of the vecotr.
- * @param rotation The rotation to apply.
+ * @param end The end position of the vector.
+ * @param rotation The rotation to apply (in degrees).
+ * @param precision (Default - 3) The number of decimals in the result.
  * @returns Vec3
  */
-export function rotateVector(start: Vec3, end: Vec3, rotation: Vec3): Vec3 {
+export function rotateVector(start: Vec3, end: Vec3, rotation: Vec3, precision = 3): Vec3 {
 	rotation = rotation.map(x => (x * Math.PI) / 180) as Vec3;
 	let pos: number[][] = [[end[0] - start[0]], [end[1] - start[1]], [end[2] - start[2]]];
 	const xmat: number[][] = [
@@ -205,7 +206,7 @@ export function rotateVector(start: Vec3, end: Vec3, rotation: Vec3): Vec3 {
 	pos = multiplymats(zmat, pos);
 	pos = multiplymats(xmat, pos);
 	pos = multiplymats(ymat, pos);
-	return [pos[0][0] + start[0], pos[1][0] + start[1], pos[2][0] + start[2]] as Vec3;
+	return decimals([pos[0][0] + start[0], pos[1][0] + start[1], pos[2][0] + start[2]] as Vec3, precision);
 }
 
 /**

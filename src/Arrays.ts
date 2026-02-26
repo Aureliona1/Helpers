@@ -288,7 +288,7 @@ export class ArrOp<T extends NumberArray> {
 	}
 
 	/**
-	 * O(n) de-dplication function on any writeable ArrayLike. This function uses the string representation of the contents of the array, so it is much quicker than a full de-duplication, however it may be error prone.
+	 * O(n) de-duplication function on any writeable ArrayLike. This function uses the string representation of the contents of the array, so it is much quicker than a full de-duplication, however it may be error prone for nested objects.
 	 * @param array The array to de-duplicate.
 	 */
 	static deDuplicateLite<V, T extends WritableArrayLike<V>>(array: T): T {
