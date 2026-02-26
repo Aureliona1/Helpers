@@ -1,13 +1,14 @@
 // deno-lint-ignore-file no-explicit-any
 import { ArrOp } from "./Arrays.ts";
 import { rgb } from "./Console.ts";
-import type { Easing, Vec2, Vec3 } from "./Types.ts";
 import * as easings from "./Easings.ts";
+import type { Easing, Vec2, Vec3, Vec4 } from "./Types.ts";
 
 /**
  * Recursively sets the precision of numbers in an object, array, or number.
  * @param o The object, or number to set the precision of.
  * @param precision The number of decimals.
+ * @param method (Default - round) The method for rounding.
  */
 export function decimals<T extends string | number | any[] | Record<string, any>>(o: T, precision = 5, method: "floor" | "round" | "ceil" = "round"): T {
 	if (typeof o == "number") {
@@ -33,15 +34,6 @@ export function stringCodeToNumber(s: string): number {
 		.reduce((x, y) => x + y);
 }
 
-function mulberry32(a: number): () => number {
-	return function (): number {
-		let t = (a += 0x6d2b79f5);
-		t = Math.imul(t ^ (t >>> 15), t | 1);
-		t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
-		return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
-	};
-}
-
 /**
  * Generate a random number.
  * @param min The minimun possible number to generate (inclusive).
@@ -52,7 +44,14 @@ function mulberry32(a: number): () => number {
  */
 export function random(min: number, max: number, seed: number | string = Math.random(), precision = 3): number {
 	[min, max] = min > max ? [max, min] : [min, max];
-	return decimals(mulberry32(stringCodeToNumber(seed.toString()))() * (max - min) + min, precision, "floor");
+	const parsedSeed = stringCodeToNumber(`${seed}`);
+	const mul32 = (s: number) => {
+		let t = (s += 0x6d2b79f5);
+		t = Math.imul(t ^ (t >>> 15), t | 1);
+		t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
+		return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+	};
+	return mapRange(mul32(parsedSeed), [0, 1], [min, max], precision);
 }
 
 /**

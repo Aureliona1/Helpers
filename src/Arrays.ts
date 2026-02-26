@@ -35,7 +35,12 @@ export class RandomArray {
 	 * @param length The length of the array (how many numbers to generate).
 	 * @param decimals The precision of the result (0 for integers).
 	 */
-	constructor(public seed: number | string = Math.random(), public range: [number, number] = [0, 1], public length = 2, public decimals = 5) {}
+	constructor(
+		public seed: number | string = Math.random(),
+		public range: [number, number] = [0, 1],
+		public length = 2,
+		public decimals = 5
+	) {}
 	/**
 	 * Creates the array based on set parameters.
 	 * @returns An array of random values.
@@ -348,14 +353,24 @@ export class ArrOp<T extends NumberArray> {
 	 * Get the element with the greatest numerical value.
 	 */
 	get max(): number {
-		return Math.max(...this.arr);
+		if (!this.arr.length) return 0;
+		let m = this.arr[0];
+		for (let i = 1; i < this.arr.length; i++) {
+			if (this.arr[i] > m) m = this.arr[i];
+		}
+		return m;
 	}
 
 	/**
 	 * Get the element in the array with the least numerical value.
 	 */
 	get min(): number {
-		return Math.min(...this.arr);
+		if (!this.arr.length) return 0;
+		let m = this.arr[0];
+		for (let i = 1; i < this.arr.length; i++) {
+			if (this.arr[i] < m) m = this.arr[i];
+		}
+		return m;
 	}
 
 	/**
