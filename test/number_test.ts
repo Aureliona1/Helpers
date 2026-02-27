@@ -1,7 +1,7 @@
 import { msToTimeString, rotateVector } from "@aurellis/helpers";
 import { arrFromFunction, ArrOp } from "../src/Arrays.ts";
 import { compare } from "../src/Misc.ts";
-import { clamp, clampLoop, decimals, distance, midPoint, random } from "../src/Numbers.ts";
+import { clamp, clampLoop, decimals, distance, midPoint, random, stringCodeToNumber } from "../src/Numbers.ts";
 import { assert } from "./assert.ts";
 
 Deno.test({
@@ -17,20 +17,25 @@ Deno.test({
 	name: "Random",
 	fn: () => {
 		// Test PRNG uniformity using coefficient of variation.
-		const sampleLength = 1_000_000;
-		const sample = arrFromFunction(sampleLength, i => random(0, 1, i));
 
-		const bins = 10;
-		const spread = new Array(bins).fill(0);
+		// Samples should be from 0 to 1
+		const getCV = (samples: number[], bins = 10) => {
+			const spread = new Array(bins).fill(0);
+			for (const v of samples) {
+				spread[Math.floor(v * bins)]++;
+			}
 
-		for (const v of sample) {
-			spread[Math.floor(v * bins)]++;
-		}
+			const mean = new ArrOp(spread).mean;
+			const stdDev = Math.sqrt(ArrOp.sum(spread.map(x => Math.pow(x - mean, 2))) / bins);
+			return stdDev / mean;
+		};
 
-		const mean = new ArrOp(spread).mean;
-		const stdDev = Math.sqrt(ArrOp.sum(spread.map(x => Math.pow(x - mean, 2))) / bins);
-		const tolerance = 0.5; // 50% tolerance
-		assert(stdDev / mean < tolerance);
+		assert(
+			getCV(
+				arrFromFunction(1 << 20, i => random(0, 1, i, 5)),
+				100
+			) < 0.01 // 1% tolerance
+		);
 	}
 });
 

@@ -44,14 +44,15 @@ export function stringCodeToNumber(s: string): number {
  */
 export function random(min: number, max: number, seed: number | string = Math.random(), precision = 3): number {
 	[min, max] = min > max ? [max, min] : [min, max];
-	const parsedSeed = stringCodeToNumber(`${seed}`);
-	const mul32 = (s: number) => {
-		let t = (s += 0x6d2b79f5);
-		t = Math.imul(t ^ (t >>> 15), t | 1);
-		t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
-		return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+	const parsedSeed = typeof seed == "number" ? seed : stringCodeToNumber(`${seed}`);
+	const xor32 = (s: number) => {
+		s ^= s << 13;
+		s ^= s >> 17;
+		s ^= s << 5;
+		return s / 0xffffffff + 0.5;
 	};
-	return mapRange(mul32(parsedSeed), [0, 1], [min, max], precision);
+
+	return mapRange(xor32(parsedSeed), [0, 1], [min, max], precision);
 }
 
 /**
