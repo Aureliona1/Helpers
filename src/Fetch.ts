@@ -12,7 +12,11 @@ export class FetchQueue {
 	 * @param requestTimeoutMS The time in ms between allowing each request to begin, this allows requests to be staggered more.
 	 * @param bufferBody Whether to instantly request the body of a response once receiving the headers. This means that, down the line, the body methods resolve instantly.
 	 */
-	constructor(readonly maxRequests: number, readonly requestTimeoutMS = 0, public bufferBody = true) {}
+	constructor(
+		readonly maxRequests: number,
+		readonly requestTimeoutMS = 0,
+		public bufferBody = true
+	) {}
 
 	/**
 	 * Await the specified delay between queued requests.
@@ -29,7 +33,7 @@ export class FetchQueue {
 
 	/**
 	 * Add a new job to the queue, resolves when the job is accepted.
-	 * @param priority A number that signifies th priority of this request. 0 is the highest priority and will be executed first.
+	 * @param priority A number that signifies the priority of this request. 0 is the highest priority and will be executed first.
 	 */
 	waitTurn(priority = 5): Promise<() => void> {
 		return new Promise(res => {
@@ -140,7 +144,11 @@ export class QueuedResponse {
 	 * @param res The raw fetch response.
 	 * @param queue The source queue. All methods on this class will be run through the queue.
 	 */
-	constructor(private res: Response, private queue: FetchQueue, private bodyBlob?: Blob) {
+	constructor(
+		private res: Response,
+		private queue: FetchQueue,
+		private bodyBlob?: Blob
+	) {
 		this.headers = res.headers;
 		this.ok = res.ok;
 		this.redirected = res.redirected;

@@ -1,5 +1,6 @@
+import { ArrOp } from "./Arrays.ts";
 import { sleepSync } from "./Misc.ts";
-import { decimals, msToTimeString } from "./Numbers.ts";
+import { clamp, decimals, lerp, mapRange, msToTimeString } from "./Numbers.ts";
 import type { ClogSettings } from "./Types.ts";
 
 /**
@@ -131,5 +132,32 @@ export function clog(msg: any, error: "Log" | "Warning" | "Error" = "Log", sourc
 		console.error(`${rgb(255, 0, 0)}[${globalClogSettings.errorSymbol}] \x1b[90m[${time()}] \x1b[90m[${source}] ${rgb(255, 0, 0)}ERROR:\x1b[0m`, msg);
 	} else {
 		console.log(`\x1b[34m[${globalClogSettings.logSymbol}] \x1b[90m[${time()}] \x1b[90m[${source}]\x1b[0m`, msg);
+	}
+}
+
+/**
+ * Graph samples from a list of values in the console.
+ * @param values The values to graph.
+ * @param sampleCount The number of samples from the values to take.
+ * @param sampleMethod The method for sampling from the values (Default - Interpolate).
+ */
+export function graphValues(values: number[], sampleCount: number = Deno.consoleSize().rows, sampleMethod: "Nearest" | "Floor" | "Interpolate" = "Interpolate"): void {
+	const max = new ArrOp(values).max;
+	const width = Deno.consoleSize().columns;
+	for (let i = 0; i < sampleCount; i++) {
+		const position = (i / sampleCount) * values.length;
+		switch (sampleMethod) {
+			case "Nearest": {
+				console.log(rgb(255, 255, 255, true) + " ".repeat((values[clamp(Math.round(position), [0, values.length - 1])] * width) / max) + "\x1b[0m");
+			}
+			case "Floor": {
+				console.log(rgb(255, 255, 255, true) + " ".repeat((values[Math.floor(position)] * width) / max) + "\x1b[0m");
+			}
+			case "Interpolate": {
+				const upperI = clamp(Math.ceil(position), [0, values.length - 1]);
+				const lowerI = Math.floor(position);
+				console.log(rgb(255, 255, 255, true) + " ".repeat((lerp(values[upperI], values[lowerI], mapRange(position, [lowerI, upperI], [0, 1])) * width) / max) + "\x1b[0m");
+			}
+		}
 	}
 }
