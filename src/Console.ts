@@ -12,22 +12,25 @@ export const resetLineString = "\x1b[1A\x1b[0K";
  * Repeat code a certain number of times, logging the progress for each iteration.
  * @param rep The number of times to repeat.
  * @param c The code to execute on each iteration.
- * @param progressTimeout The number of ms to wait between loggin the progress (Default - 50).
+ * @param progressTimeout The number of ms to wait between logging the progress (Default - 50).
+ * @param name The name of the task that is being repeated (optional).
  */
-export function progressRepeat(rep: number, c: (i: number) => void, progressTimeout = 50) {
+export function progressRepeat(rep: number, c: (i: number) => void, progressTimeout = 50, name?: string) {
 	const startTime = Date.now();
 	let lastLogAt = startTime;
-	console.log(`[Elapsed: ${rgb(100, 150, 255)}0ms\x1b[0m | est. remaining: ${rgb(100, 150, 255)}NaN\x1b[0m ] 0% complete...`);
+	const message = (el: string, rem: string, perc: number, logCount: number, name?: string) =>
+		`${name ? name + ": " : ""}[Elapsed: ${rgb(100, 150, 255) + el}\x1b[0m | est. remaining: ${rgb(100, 150, 255) + rem}\x1b[0m ] ${perc}% complete...` + "".padEnd(logCount % 4, ".");
+	console.log(message(msToTimeString(0), "NaN", 0, 0, name));
 	for (let i = 0, logCount = 0; i < rep; i++) {
 		c(i);
 		if (Date.now() - lastLogAt > progressTimeout && i > 0) {
 			lastLogAt = startTime;
 			logCount++;
 			const elapsed = Date.now() - startTime;
-			console.log(`${resetLineString}[Elapsed: ${msToTimeString(elapsed)} | est. remaining: ${msToTimeString(Math.round((rep * elapsed) / i - elapsed))} ] ${decimals((i * 100) / rep, 0)}% complete` + "".padEnd(logCount % 4, "."));
+			console.log(resetLineString + message(msToTimeString(elapsed), msToTimeString(Math.round((rep * elapsed) / i - elapsed)), decimals((i * 100) / rep, 0), logCount, name));
 		}
 	}
-	console.log(`${resetLineString}[Elapsed: ${msToTimeString(Date.now() - startTime)} | est. remaining: ${rgb(100, 150, 255)}0s\x1b[0m ] 100% complete`);
+	console.log(resetLineString + message(msToTimeString(Date.now() - startTime), "0s", 100, 1, name));
 }
 /**
  * User input validation using regex.
