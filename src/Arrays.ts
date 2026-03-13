@@ -1,8 +1,7 @@
 // deno-lint-ignore-file no-explicit-any
-import type { TypedArray } from "@aurellis/helpers";
 import { compare } from "./Misc.ts";
 import { lerp, random } from "./Numbers.ts";
-import type { Easing, IntTypedArray, NumberArray, UintTypedArray, WritableArrayLike } from "./Types.ts";
+import type { Easing, IntTypedArray, NumberArray, TypedArray, UintTypedArray, WritableArrayLike } from "./Types.ts";
 
 /**
  * Remove entries from an array and return the modified array. Affects the original array, therefore you do not need to reassign.
