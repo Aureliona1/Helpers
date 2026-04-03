@@ -35,6 +35,19 @@ export function stringCodeToNumber(s: string): number {
 }
 
 /**
+ * Spread a seed number across 32 bits.
+ */
+function fastSeed(seed: number): number {
+	let x = seed * 0x9e3779b1; // golden ratio prime
+	x ^= x >>> 16;
+	x = Math.imul(x, 0x85ebca6b);
+	x ^= x >>> 13;
+	x = Math.imul(x, 0xc2b2ae35);
+	x ^= x >>> 16;
+	return x >>> 0;
+}
+
+/**
  * Generate a random number.
  * @param min The minimun possible number to generate (inclusive).
  * @param max The maximum possible number to generate (exclusive).
@@ -44,7 +57,7 @@ export function stringCodeToNumber(s: string): number {
  */
 export function random(min: number, max: number, seed: number | string = Math.random(), precision = 3): number {
 	[min, max] = min > max ? [max, min] : [min, max];
-	const parsedSeed = typeof seed == "number" ? seed : stringCodeToNumber(`${seed}`);
+	const parsedSeed = typeof seed == "number" ? fastSeed(seed) : stringCodeToNumber(`${seed}`);
 	const xor32 = (s: number) => {
 		s ^= s << 13;
 		s ^= s >> 17;
