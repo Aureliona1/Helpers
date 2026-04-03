@@ -174,7 +174,7 @@ export class ArrOp<T extends NumberArray> {
 	 * @param arr The array to shuffle.
 	 * @param seed The seed for the shuffle (leave blank for random).
 	 */
-	static shuffle<T extends NumberArray>(arr: T, seed: number = Math.random()): T {
+	static shuffle<V, T extends WritableArrayLike<V>>(arr: T, seed: number = Math.random()): T {
 		const Constructor = arr.constructor as {
 			new (length: number): T;
 		};
@@ -275,7 +275,7 @@ export class ArrOp<T extends NumberArray> {
 	 * If the length of the arrays differ, the longer arrays will be chopped to the length of the shortest one.
 	 * @param arrays The arrays to interleave.
 	 */
-	static interleave<T extends NumberArray>(...arrays: T[]): T {
+	static interleave<V, T extends WritableArrayLike<V>>(...arrays: T[]): T {
 		const Constructor = arrays[0].constructor as {
 			new (length: number): T;
 		};
