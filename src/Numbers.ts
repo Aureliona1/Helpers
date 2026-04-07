@@ -157,7 +157,7 @@ export function msToTimeString(time: number): string {
 		ms = time;
 		time -= ms;
 	}
-	return `${h ? h + "h:" : ""}${m ? m + "m:" : ""}${s ? s + "s:" : ""}${ms}ms`;
+	return `${h ? h + "h:" : ""}${m ? m + "m:" : ""}${s ? s + "s:" : ""}${ms.toString().padStart(3, "0")}ms`;
 }
 
 /**
