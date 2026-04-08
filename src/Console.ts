@@ -13,24 +13,24 @@ export const resetLineString = "\x1b[1A\x1b[0K";
  * @param rep The number of times to repeat.
  * @param c The code to execute on each iteration.
  * @param progressTimeout The number of ms to wait between logging the progress (Default - 50).
- * @param name The name of the task that is being repeated (optional).
+ * @param source The name of the task that is being repeated (optional).
  */
-export function progressRepeat(rep: number, c: (i: number) => void, progressTimeout = 50, name?: string) {
+export function progressRepeat(rep: number, c: (i: number) => void, progressTimeout = 50, source?: string) {
 	const startTime = Date.now();
 	let lastLogAt = startTime;
-	const message = (el: string, rem: string, perc: number, logCount: number, name?: string) =>
-		`${name ? name + ": " : ""}[Elapsed: ${rgb(100, 150, 255) + el}\x1b[0m | est. remaining: ${rgb(100, 150, 255) + rem}\x1b[0m ] ${perc}% complete...` + "".padEnd(logCount % 4, ".");
-	console.log(message(msToTimeString(0), "NaN", 0, 0, name));
+	const message = (el: string, rem: string, perc: number, logCount: number, source?: string) =>
+		`${clogString("Log", source)} [Elapsed: ${rgb(100, 150, 255) + el}\x1b[0m | est. remaining: ${rgb(100, 150, 255) + rem}\x1b[0m ] ${perc}% complete...` + "".padEnd(logCount % 4, ".");
+	console.log(message(msToTimeString(0), "NaN", 0, 0, source));
 	for (let i = 0, logCount = 0; i < rep; i++) {
 		c(i);
 		if (Date.now() - lastLogAt > progressTimeout && i > 0) {
 			lastLogAt = startTime;
 			logCount++;
 			const elapsed = Date.now() - startTime;
-			console.log(resetLineString + message(msToTimeString(elapsed), msToTimeString(Math.round((rep * elapsed) / i - elapsed)), decimals((i * 100) / rep, 0), logCount, name));
+			console.log(resetLineString + message(msToTimeString(elapsed), msToTimeString(Math.round((rep * elapsed) / i - elapsed)), decimals((i * 100) / rep, 0), logCount, source));
 		}
 	}
-	console.log(resetLineString + message(msToTimeString(Date.now() - startTime), "0s", 100, 1, name));
+	console.log(resetLineString + message(msToTimeString(Date.now() - startTime), "0s", 100, 1, source));
 }
 /**
  * User input validation using regex.
@@ -113,14 +113,7 @@ export function clogSettingsUpdate(newSettings: Partial<ClogSettings>) {
 	globalClogSettings = { ...globalClogSettings, ...newSettings };
 }
 
-/**
- * Log a message to the console with prepended information about the source, type, and timestamp of the log.
- * @param msg The message to log.
- * @param error The type of message (Default - Log).
- * @param source The source of the log, this may be the function that the log was called in, or the process/application.
- */
-// deno-lint-ignore no-explicit-any
-export function clog(msg: any, error: "Log" | "Warning" | "Error" = "Log", source = "main") {
+function clogString(errorLevel: "Log" | "Warning" | "Error" = "Log", source = "main"): string {
 	const time = () => {
 		switch (globalClogSettings.timeFormat) {
 			case "System Time":
@@ -129,12 +122,31 @@ export function clog(msg: any, error: "Log" | "Warning" | "Error" = "Log", sourc
 				return msToTimeString(Date.now() - scriptStartTime);
 		}
 	};
-	if (error == "Warning") {
-		console.warn(`${rgb(255, 255, 0)}[${globalClogSettings.warnSymbol}] \x1b[90m[${time()}] \x1b[90m[${source}] ${rgb(255, 255, 0)}WARNING:\x1b[0m`, msg);
-	} else if (error == "Error") {
-		console.error(`${rgb(255, 0, 0)}[${globalClogSettings.errorSymbol}] \x1b[90m[${time()}] \x1b[90m[${source}] ${rgb(255, 0, 0)}ERROR:\x1b[0m`, msg);
+	if (errorLevel == "Warning") {
+		return `${rgb(255, 255, 0)}[${globalClogSettings.warnSymbol}] \x1b[90m[${time()}] \x1b[90m[${source}] ${rgb(255, 255, 0)}WARNING:\x1b[0m`;
+	} else if (errorLevel == "Error") {
+		return `${rgb(255, 0, 0)}[${globalClogSettings.errorSymbol}] \x1b[90m[${time()}] \x1b[90m[${source}] ${rgb(255, 0, 0)}ERROR:\x1b[0m`;
 	} else {
-		console.log(`\x1b[34m[${globalClogSettings.logSymbol}] \x1b[90m[${time()}] \x1b[90m[${source}]\x1b[0m`, msg);
+		return `\x1b[34m[${globalClogSettings.logSymbol}] \x1b[90m[${time()}] \x1b[90m[${source}]\x1b[0m`;
+	}
+}
+
+/**
+ * Log a message to the console with prepended information about the source, type, and timestamp of the log.
+ * @param msg The message to log.
+ * @param error The type of message (Default - Log).
+ * @param source The source of the log, this may be the function that the log was called in, or the process/application.
+ */
+export function clog(msg: any, error: "Log" | "Warning" | "Error" = "Log", source = "main") {
+	switch (error) {
+		case "Log":
+			console.log(clogString(error, source), msg);
+			break;
+		case "Warning":
+			console.warn(clogString(error, source), msg);
+			break;
+		case "Error":
+			console.error(clogString(error, source), msg);
 	}
 }
 
