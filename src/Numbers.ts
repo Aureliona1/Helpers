@@ -1,8 +1,8 @@
 // deno-lint-ignore-file no-explicit-any
 import { ArrOp } from "./Arrays.ts";
 import { rgb } from "./Console.ts";
-import * as easings from "./Easings.ts";
-import type { Easing, Vec2, Vec3, Vec4 } from "./Types.ts";
+import { easings } from "./Easings.ts";
+import type { Easing, Vec2, Vec3 } from "./Types.ts";
 
 /**
  * Recursively sets the precision of numbers in an object, array, or number.
