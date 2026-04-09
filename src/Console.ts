@@ -12,10 +12,10 @@ export const resetLineString = "\x1b[1A\x1b[0K";
  * Repeat code a certain number of times, logging the progress for each iteration.
  * @param rep The number of times to repeat.
  * @param c The code to execute on each iteration.
- * @param progressTimeout The number of ms to wait between logging the progress (Default - 50).
+ * @param logTimeout The number of ms to wait between logging the progress (Default - 50).
  * @param source The name of the task that is being repeated (optional).
  */
-export function progressRepeat(rep: number, c: (i: number) => void, progressTimeout = 50, source?: string) {
+export function progressRepeatSync(rep: number, c: (i: number) => void, logTimeout = 50, source?: string) {
 	const startTime = Date.now();
 	let lastLogAt = startTime;
 	const message = (el: string, rem: string, perc: number, logCount: number, source?: string) =>
@@ -23,7 +23,32 @@ export function progressRepeat(rep: number, c: (i: number) => void, progressTime
 	console.log(message(msToTimeString(0), "NaN", 0, 0, source));
 	for (let i = 0, logCount = 0; i < rep; i++) {
 		c(i);
-		if (Date.now() - lastLogAt > progressTimeout && i > 0) {
+		if (Date.now() - lastLogAt > logTimeout && i > 0) {
+			lastLogAt = startTime;
+			logCount++;
+			const elapsed = Date.now() - startTime;
+			console.log(resetLineString + message(msToTimeString(elapsed), msToTimeString(Math.round((rep * elapsed) / i - elapsed)), decimals((i * 100) / rep, 0), logCount, source));
+		}
+	}
+	console.log(resetLineString + message(msToTimeString(Date.now() - startTime), "0s", 100, 1, source));
+}
+
+/**
+ * Repeat code a certain number of times, logging the progress for each iteration. The code can be async and it will be awaited in order.
+ * @param rep The number of times to repeat.
+ * @param c The code to execute on each iteration.
+ * @param logTimeout The number of ms to wait between logging the progress (Default - 50).
+ * @param source The name of the task that is being repeated (optional).
+ */
+export async function progressRepeat(rep: number, c: (i: number) => Promise<void>, logTimeout = 50, source?: string) {
+	const startTime = Date.now();
+	let lastLogAt = startTime;
+	const message = (el: string, rem: string, perc: number, logCount: number, source?: string) =>
+		`${clogString("Log", source)} [Elapsed: ${rgb(100, 150, 255) + el}\x1b[0m | est. remaining: ${rgb(100, 150, 255) + rem}\x1b[0m ] ${perc}% complete...` + "".padEnd(logCount % 4, ".");
+	console.log(message(msToTimeString(0), "NaN", 0, 0, source));
+	for (let i = 0, logCount = 0; i < rep; i++) {
+		await c(i);
+		if (Date.now() - lastLogAt > logTimeout && i > 0) {
 			lastLogAt = startTime;
 			logCount++;
 			const elapsed = Date.now() - startTime;
