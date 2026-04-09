@@ -8,6 +8,20 @@ import type { ClogSettings } from "./Types.ts";
  */
 export const resetLineString = "\x1b[1A\x1b[0K";
 
+let progressStringLogCount = 0;
+/**
+ * The string to be logged in both versions of progressRepeat.
+ * @param elapsed The total elapsed time string.
+ * @param remaining The total remaining time string
+ * @param percent The current percent.
+ * @param source The source of the log.
+ */
+function progressString(elapsed: number, remaining: number, percent: number, source?: string): string {
+	const el = msToTimeString(elapsed);
+	const rem = msToTimeString(remaining);
+	return `${clogString("Log", source)} [Elapsed: ${rgb(100, 150, 255) + el}\x1b[0m | est. remaining: ${rgb(100, 150, 255) + rem}\x1b[0m ] ${percent}% complete${".".repeat(progressStringLogCount % 4)}`;
+}
+
 /**
  * Repeat code a certain number of times, logging the progress for each iteration.
  * @param rep The number of times to repeat.
@@ -18,19 +32,16 @@ export const resetLineString = "\x1b[1A\x1b[0K";
 export function progressRepeatSync(rep: number, c: (i: number) => void, logTimeout = 50, source?: string) {
 	const startTime = Date.now();
 	let lastLogAt = startTime;
-	const message = (el: string, rem: string, perc: number, logCount: number, source?: string) =>
-		`${clogString("Log", source)} [Elapsed: ${rgb(100, 150, 255) + el}\x1b[0m | est. remaining: ${rgb(100, 150, 255) + rem}\x1b[0m ] ${perc}% complete...` + "".padEnd(logCount % 4, ".");
-	console.log(message(msToTimeString(0), "NaN", 0, 0, source));
-	for (let i = 0, logCount = 0; i < rep; i++) {
+	console.log(progressString(0, NaN, 0, source));
+	for (let i = 0; i < rep; i++) {
 		c(i);
 		if (Date.now() - lastLogAt > logTimeout && i > 0) {
 			lastLogAt = startTime;
-			logCount++;
 			const elapsed = Date.now() - startTime;
-			console.log(resetLineString + message(msToTimeString(elapsed), msToTimeString(Math.round((rep * elapsed) / i - elapsed)), decimals((i * 100) / rep, 0), logCount, source));
+			console.log(resetLineString + progressString(elapsed, Math.round((rep * elapsed) / i - elapsed), decimals((i * 100) / rep, 0), source));
 		}
 	}
-	console.log(resetLineString + message(msToTimeString(Date.now() - startTime), "0s", 100, 1, source));
+	console.log(resetLineString + progressString(Date.now() - startTime, 0, 100, source));
 }
 
 /**
@@ -43,19 +54,17 @@ export function progressRepeatSync(rep: number, c: (i: number) => void, logTimeo
 export async function progressRepeat(rep: number, c: (i: number) => Promise<void>, logTimeout = 50, source?: string) {
 	const startTime = Date.now();
 	let lastLogAt = startTime;
-	const message = (el: string, rem: string, perc: number, logCount: number, source?: string) =>
-		`${clogString("Log", source)} [Elapsed: ${rgb(100, 150, 255) + el}\x1b[0m | est. remaining: ${rgb(100, 150, 255) + rem}\x1b[0m ] ${perc}% complete...` + "".padEnd(logCount % 4, ".");
-	console.log(message(msToTimeString(0), "NaN", 0, 0, source));
-	for (let i = 0, logCount = 0; i < rep; i++) {
+	console.log(progressString(0, NaN, 0, source));
+	for (let i = 0; i < rep; i++) {
 		await c(i);
 		if (Date.now() - lastLogAt > logTimeout && i > 0) {
 			lastLogAt = startTime;
-			logCount++;
+
 			const elapsed = Date.now() - startTime;
-			console.log(resetLineString + message(msToTimeString(elapsed), msToTimeString(Math.round((rep * elapsed) / i - elapsed)), decimals((i * 100) / rep, 0), logCount, source));
+			console.log(resetLineString + progressString(elapsed, Math.round((rep * elapsed) / i - elapsed), decimals((i * 100) / rep, 0), source));
 		}
 	}
-	console.log(resetLineString + message(msToTimeString(Date.now() - startTime), "0s", 100, 1, source));
+	console.log(resetLineString + progressString(Date.now() - startTime, 0, 100, source));
 }
 /**
  * User input validation using regex.
