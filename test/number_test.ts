@@ -42,7 +42,7 @@ Deno.test({
 Deno.test({
 	name: "Clamp",
 	fn: () => {
-		const res = clamp(100, [0, 50]);
+		const res = clamp(100, 0, 50);
 		assert(compare(res, 50));
 	}
 });
@@ -50,7 +50,7 @@ Deno.test({
 Deno.test({
 	name: "Clamp Loop",
 	fn: () => {
-		const res = clampLoop(100, [50, 70]);
+		const res = clampLoop(100, 50, 70);
 		assert(50 <= res && res <= 70);
 	}
 });

@@ -71,19 +71,19 @@ export function random(min: number, max: number, seed: number | string = Math.ra
 /**
  * Clamp a number within a range, also works recursively on arrays or objects.
  * @param val The value, array, or object of values to clamp.
- * @param range The range (inclusive) to clamp the value within.
+ * @param min The minimum (inclusive) value to clamp to.
+ * @param max The maximum (inclusive) value to clamp to.
  */
-export function clamp<T extends number | string | any[] | Record<string, any>>(val: T, range: Vec2): T {
-	range = range[0] > range[1] ? [range[1], range[0]] : range;
+export function clamp<T extends number | string | any[] | Record<string, any>>(val: T, min: number, max: number): T {
 	if (typeof val == "number") {
-		return Math.max(Math.min(...range), Math.min(Math.max(...range), val)) as T;
+		return Math.max(Math.min(min, max), Math.min(Math.max(min, max), val)) as T;
 	} else if (!(typeof val == "number" || typeof val == "object")) {
 		return val;
 	} else if (Array.isArray(val)) {
-		(val as any[]) = val.map(x => clamp(x, range));
+		(val as any[]) = val.map(x => clamp(x, min, max));
 	} else {
 		Object.keys(val).forEach(key => {
-			val[key] = clamp(val[key], range);
+			val[key] = clamp(val[key], min, max);
 		});
 	}
 	return val;
@@ -93,19 +93,24 @@ export function clamp<T extends number | string | any[] | Record<string, any>>(v
  * Clamps a number within a range by looping it when it extends the range on either side.
  * This function works recusively on any object or array or number.
  * @param x The number to clamp.
- * @param range The [min, max] to clamp to
+ * @param min The minimum (inclusive) value to clamp to.
+ * @param max The maximum (inclusive) value to clamp to.
  */
-export function clampLoop<T extends number | string | any[] | Record<string, any>>(val: T, range: Vec2): T {
-	range = range[0] > range[1] ? [range[1], range[0]] : range;
+export function clampLoop<T extends number | string | any[] | Record<string, any>>(val: T, min: number, max: number): T {
+	if (max < min) {
+		const temp = min;
+		min = max;
+		max = temp;
+	}
 	if (typeof val == "number") {
-		return (val >= 0 ? (val % (range[1] - range[0])) + range[0] : (val % (range[1] - range[0])) + range[1] - 1) as T;
+		return (val >= 0 ? (val % (max - min)) + min : (val % (max - min)) + max - 1) as T;
 	} else if (!(typeof val == "number" || typeof val == "object")) {
 		return val;
 	} else if (Array.isArray(val)) {
-		(val as any[]) = val.map(x => clamp(x, range));
+		(val as any[]) = val.map(x => clampLoop(x, min, max));
 	} else {
 		Object.keys(val).forEach(key => {
-			val[key] = clamp(val[key], range);
+			val[key] = clampLoop(val[key], min, max);
 		});
 	}
 	return val;

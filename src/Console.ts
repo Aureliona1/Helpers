@@ -197,13 +197,13 @@ export function graphValues(values: number[], sampleCount: number = Deno.console
 		const position = (i / sampleCount) * values.length;
 		switch (sampleMethod) {
 			case "Nearest": {
-				console.log(rgb(255, 255, 255, true) + " ".repeat((values[clamp(Math.round(position), [0, values.length - 1])] * width) / max) + "\x1b[0m");
+				console.log(rgb(255, 255, 255, true) + " ".repeat((values[clamp(Math.round(position), 0, values.length - 1)] * width) / max) + "\x1b[0m");
 			}
 			case "Floor": {
 				console.log(rgb(255, 255, 255, true) + " ".repeat((values[Math.floor(position)] * width) / max) + "\x1b[0m");
 			}
 			case "Interpolate": {
-				const upperI = clamp(Math.ceil(position), [0, values.length - 1]);
+				const upperI = clamp(Math.ceil(position), 0, values.length - 1);
 				const lowerI = Math.floor(position);
 				console.log(rgb(255, 255, 255, true) + " ".repeat((lerp(values[upperI], values[lowerI], mapRange(position, [lowerI, upperI], [0, 1])) * width) / max) + "\x1b[0m");
 			}
