@@ -420,6 +420,7 @@ export class ArrOp<T extends NumberArray> {
  * @param arrays The list of arrays to concatenate.
  */
 export function concatTypedArrays<T extends TypedArray>(...arrays: T[]): T {
+	if (!arrays.length) throw new Error("Cannot infer array type from empty input...");
 	const newLength = arrays.reduce((sum, b) => sum + b.length, 0);
 	const Constructor = arrays[0].constructor as {
 		new (length: number): T;
