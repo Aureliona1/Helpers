@@ -147,7 +147,12 @@ export function clogSettingsUpdate(newSettings: Partial<ClogSettings>) {
 	globalClogSettings = { ...globalClogSettings, ...newSettings };
 }
 
-function clogString(errorLevel: "Log" | "Warning" | "Error" = "Log", source = "main"): string {
+/**
+ * Generate the string that is prepended to every message logged with {@link clog}.
+ * @param errorLevel The error level of the log message.
+ * @param source The source of the log message.
+ */
+export function clogString(errorLevel: "Log" | "Warning" | "Error" = "Log", source = "main"): string {
 	const time = () => {
 		switch (globalClogSettings.timeFormat) {
 			case "System Time":
