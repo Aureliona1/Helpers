@@ -137,6 +137,12 @@ export class QueuedResponse {
 	 * Get response URL.
 	 */
 	readonly url: string;
+
+	/**
+	 * Streamable body buffer.
+	 */
+	readonly body: ReadableStream<Uint8Array> | null;
+
 	/**
 	 * A queued response from a FetchQueue.
 	 * This will be automagically initialised from a queued fetch request.
@@ -156,6 +162,7 @@ export class QueuedResponse {
 		this.statusText = res.statusText;
 		this.type = res.type;
 		this.url = res.url;
+		this.body = res.body;
 	}
 
 	/**
