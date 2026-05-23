@@ -6,6 +6,9 @@ import { compare, ensureFile, ensureFileSync } from "./Misc.ts";
  * Access and modify a cache file.
  */
 export class Cache {
+	private memory: Record<string, any> = {};
+	// Whether the disk cache has been modified.
+	private dirty = true;
 	/**
 	 * Create an empty cache if absent.
 	 */
@@ -78,16 +81,22 @@ export class Cache {
 	 * @param entry The name to read, returns undefined if this name doesn't exist in the cache.
 	 */
 	async read<T>(entry: string): Promise<T> {
-		const cache = await this.readFile();
-		return cache[entry];
+		if (this.dirty) {
+			this.memory = await this.readFile();
+			this.dirty = false;
+		}
+		return this.memory[entry];
 	}
 	/**
 	 * Read the value at a name in the cache.
 	 * @param entry The name to read, returns undefined if this name doesn't exist in the cache.
 	 */
 	readSync<T>(entry: string): T {
-		const cache = this.readFileSync();
-		return cache[entry];
+		if (this.dirty) {
+			this.memory = this.readFileSync();
+			this.dirty = false;
+		}
+		return this.memory[entry];
 	}
 	/**
 	 * Write an entry into the cache. If the data param is undefined, it will delete the entry with the given name.
@@ -103,6 +112,7 @@ export class Cache {
 		}
 		try {
 			await Deno.writeTextFile(this.fileName, JSON.stringify(cache));
+			this.dirty = true;
 		} catch (e) {
 			clog("Error writing cache file, check your write permissions...", "Error", "Cache");
 			clog(e, "Error", "Cache");
@@ -122,6 +132,7 @@ export class Cache {
 		}
 		try {
 			Deno.writeTextFileSync(this.fileName, JSON.stringify(cache));
+			this.dirty = true;
 		} catch (e) {
 			clog("Error writing cache file, check your write permissions...", "Error", "Cache");
 			clog(e, "Error", "Cache");
@@ -133,6 +144,7 @@ export class Cache {
 	async clear() {
 		try {
 			await Deno.remove(this.fileName);
+			this.dirty = true;
 		} catch (e) {
 			clog("Error clearing cache, check your write permissions...", "Error", "Cache");
 			clog(e, "Error", "Cache");
@@ -144,13 +156,14 @@ export class Cache {
 	clearSync() {
 		try {
 			Deno.removeSync(this.fileName);
+			this.dirty = true;
 		} catch (e) {
 			clog("Error clearing cache, check your write permissions...", "Error", "Cache");
 			clog(e, "Error", "Cache");
 		}
 	}
 	/**
-	 * Return an array of the adressable entries in the cache.
+	 * Return an array of the addressable entries in the cache.
 	 */
 	async entriesAsync(): Promise<string[]> {
 		return Object.getOwnPropertyNames(await this.readFile());
