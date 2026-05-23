@@ -201,7 +201,7 @@ export class Cache {
 /**
  * Access and modify an in-memory cache to store frequently used data. Data is defined by a name and a signature that identifies the state of the data.
  * @example
- * The signature can represent the parameters that were passed into a function that does a lot of work, but may have the same parameters multiple times.
+ * The signature can represent the arguments that were passed into a function that does a lot of work, but may have the same arguments multiple times.
  *
  * ```ts
  * const addCache = new MemoryCache();
