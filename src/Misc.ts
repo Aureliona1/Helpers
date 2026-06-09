@@ -123,9 +123,10 @@ export function byteRgbToHsv(rgb: Uint8Array): Uint8Array {
  */
 export function pathAccessibleSync(path: string): boolean {
 	try {
-		Deno.statSync(path);
+		const fd = Deno.openSync(path);
+		fd.close();
 		return true;
-	} catch (_) {
+	} catch {
 		return false;
 	}
 }
@@ -143,9 +144,10 @@ export function pathAccessibleSync(path: string): boolean {
  */
 export async function pathAccessible(path: string): Promise<boolean> {
 	try {
-		await Deno.stat(path);
+		const fd = await Deno.open(path);
+		fd.close();
 		return true;
-	} catch (_) {
+	} catch {
 		return false;
 	}
 }
