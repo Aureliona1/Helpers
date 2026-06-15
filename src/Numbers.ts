@@ -166,11 +166,26 @@ export function msToTimeString(time: number): string {
 }
 
 /**
- * Generate a string that shows the number of GB, MB, KB from a number of bytes.
+ * Generate a string that formats a count of bytes into a human readable unit.
+ * @param bytes The number of bytes.
+ * @param unit The unit to format to. Leave blank for the largest possible unit that results in an output >= 1 for this many bytes.
  */
-export function bytesToString(bytes: number): string {
-	bytes = Math.round(bytes);
-	return `${rgb(255, 255, 0)}${decimals(bytes / 1000000000, 3)}GB | ${decimals(bytes / 1000000, 3)}MB | ${bytes / 1000}KB\x1b[0m`;
+export function bytesToString(bytes: number, unit?: "GB" | "GiB" | "MB" | "MiB" | "KB" | "KiB"): string {
+	const unitMappings: Record<Exclude<typeof unit, undefined>, number> = {
+		GB: 1000000000,
+		GiB: 1024 * 1024 * 1024,
+		KB: 1000,
+		KiB: 1024,
+		MB: 1000000,
+		MiB: 1024 * 1024
+	};
+	if (!unit) {
+		const orderedMappings = Object.entries(unitMappings).sort((a, b) => a[1] - b[1]);
+		let index = 0;
+		while (orderedMappings[index][1] > bytes) index++;
+		unit = orderedMappings[index][0] as keyof typeof unitMappings;
+	}
+	return `${rgb(255, 255, 0)}${decimals(bytes / unitMappings[unit], 3)}${unit}\x1b[0m`;
 }
 
 /**

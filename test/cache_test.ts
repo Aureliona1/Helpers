@@ -1,5 +1,6 @@
 import { Cache } from "../src/Cache.ts";
-import { compare, pathAccessible } from "../src/Misc.ts";
+import { pathAccessible } from "../src/Files.ts";
+import { compare } from "../src/Misc.ts";
 import { assert } from "./assert.ts";
 
 const path = "test/cache.json";

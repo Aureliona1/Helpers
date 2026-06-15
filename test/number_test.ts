@@ -1,7 +1,7 @@
-import { msToTimeString, rotateVector } from "@aurellis/helpers";
+import { rotateVector } from "@aurellis/helpers";
 import { arrFromFunction, ArrOp } from "../src/Arrays.ts";
 import { compare } from "../src/Misc.ts";
-import { clamp, clampLoop, decimals, distance, midPoint, random, stringCodeToNumber } from "../src/Numbers.ts";
+import { clamp, clampLoop, decimals, distance, midPoint, random } from "../src/Numbers.ts";
 import { assert } from "./assert.ts";
 
 Deno.test({
