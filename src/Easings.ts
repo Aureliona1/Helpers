@@ -1,5 +1,5 @@
 /**
- * A collection of easing functions, ported from https://eaasings.net
+ * A collection of easing functions, ported from https://easings.net
  */
 export class easings {
 	/**
