@@ -49,7 +49,7 @@ function fastSeed(seed: number): number {
 
 /**
  * Generate a random number.
- * @param min The minimun possible number to generate (inclusive).
+ * @param min The minimum possible number to generate (inclusive).
  * @param max The maximum possible number to generate (exclusive).
  * @param seed The optional seed to apply to the generator (leave blank for random).
  * @param precision (Default - 3) The number of decimals in the random number. This can be negative to round to different values, e.g., -1 will round to the nearest 10, -2 will round to the nearest 100 etc.
@@ -91,7 +91,7 @@ export function clamp<T extends number | string | any[] | Record<string, any>>(v
 
 /**
  * Clamps a number within a range by looping it when it extends the range on either side.
- * This function works recusively on any object or array or number.
+ * This function works recursively on any object or array or number.
  * @param x The number to clamp.
  * @param min The minimum (inclusive) value to clamp to.
  * @param max The maximum (inclusive) value to clamp to.
@@ -193,7 +193,7 @@ export function bytesToString(bytes: number, unit?: "GB" | "GiB" | "MB" | "MiB" 
  * @param mat1 The values for mat one (e.g., [[1,2,3],[4,5,6]])
  * @param mat2 The values for mat two (e.g., [[1,2],[3,4],[5,6]])
  */
-function multiplymats(mat1: number[][], mat2: number[][]) {
+function multiplyMats(mat1: number[][], mat2: number[][]) {
 	const md = [mat1.length, mat1[0].length],
 		nd = [mat2.length, mat2[0].length];
 	const res = new Array(md);
@@ -222,24 +222,24 @@ function multiplymats(mat1: number[][], mat2: number[][]) {
 export function rotateVector(start: Vec3, end: Vec3, rotation: Vec3, precision = 3): Vec3 {
 	rotation = rotation.map(x => (x * Math.PI) / 180) as Vec3;
 	let pos: number[][] = [[end[0] - start[0]], [end[1] - start[1]], [end[2] - start[2]]];
-	const xmat: number[][] = [
+	const xMat: number[][] = [
 		[1, 0, 0],
 		[0, Math.cos(rotation[0]), -Math.sin(rotation[0])],
 		[0, Math.sin(rotation[0]), Math.cos(rotation[0])]
 	];
-	const ymat: number[][] = [
+	const yMat: number[][] = [
 		[Math.cos(rotation[1]), 0, Math.sin(rotation[1])],
 		[0, 1, 0],
 		[-Math.sin(rotation[1]), 0, Math.cos(rotation[1])]
 	];
-	const zmat: number[][] = [
+	const zMat: number[][] = [
 		[Math.cos(rotation[2]), -Math.sin(rotation[2]), 0],
 		[Math.sin(rotation[2]), Math.cos(rotation[2]), 0],
 		[0, 0, 1]
 	];
-	pos = multiplymats(zmat, pos);
-	pos = multiplymats(xmat, pos);
-	pos = multiplymats(ymat, pos);
+	pos = multiplyMats(zMat, pos);
+	pos = multiplyMats(xMat, pos);
+	pos = multiplyMats(yMat, pos);
 	return decimals([pos[0][0] + start[0], pos[1][0] + start[1], pos[2][0] + start[2]] as Vec3, precision);
 }
 
@@ -281,7 +281,7 @@ export const waveform = {
  * @param val The value, array, or object of values to map.
  * @param from The range from which to map.
  * @param to The range to map to.
- * @param precision The number of decimal points to round to (can be nagative to round to tens, hundreds etc.).
+ * @param precision The number of decimal points to round to (can be negative to round to tens, hundreds etc.).
  * @param easing Optional easing to apply to the range.
  */
 export function mapRange<T extends number | string | any[] | Record<string, any>>(val: T, from: Vec2, to: Vec2, precision = 5, easing?: Easing): T {

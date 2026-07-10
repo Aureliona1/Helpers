@@ -144,7 +144,7 @@ export class ArrOp<T extends NumberArray> {
 	/**
 	 * Multiply an array by the elements of another array, or by a number.
 	 * @param arr1 The base array.
-	 * @param arr2 The array or number to mulitply by.
+	 * @param arr2 The array or number to multiply by.
 	 */
 	static multiply<T extends NumberArray, T2 extends NumberArray>(arr1: T, arr2: number | T2): T {
 		if (typeof arr2 == "number") {
@@ -271,7 +271,7 @@ export class ArrOp<T extends NumberArray> {
 	}
 
 	/**
-	 * Interleave multiple of the same type of array togther.
+	 * Interleave multiple of the same type of array together.
 	 * If the length of the arrays differ, the longer arrays will be chopped to the length of the shortest one.
 	 * @param arrays The arrays to interleave.
 	 */
