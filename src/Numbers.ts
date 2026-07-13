@@ -182,7 +182,7 @@ export function bytesToString(bytes: number, unit?: "GB" | "GiB" | "MB" | "MiB" 
 	if (!unit) {
 		const orderedMappings = Object.entries(unitMappings).sort((a, b) => b[1] - a[1]);
 		let index = 0;
-		while (orderedMappings[index][1] > index) index++;
+		while (orderedMappings[index][1] > index && index < orderedMappings.length - 1) index++;
 		unit = orderedMappings[index][0] as keyof typeof unitMappings;
 	}
 	return `${rgb(255, 255, 0)}${decimals(bytes / unitMappings[unit], 3)}${unit}\x1b[0m`;
