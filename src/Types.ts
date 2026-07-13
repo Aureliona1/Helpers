@@ -84,3 +84,12 @@ export type DoublyLinkedItem<T> = {
 	next: DoublyLinkedItem<T> | null;
 	prev: DoublyLinkedItem<T> | null;
 };
+
+/**
+ * A valid unit label for binary-based byte counts.
+ */
+export type BinaryByteSizeUnit = "KiB" | "MiB" | "GiB";
+/**
+ * A valid unit label for decimal-based byte counts.
+ */
+export type DecByteSizeUnit = "KB" | "MB" | "GB";

@@ -2,7 +2,7 @@
 import { ArrOp } from "./Arrays.ts";
 import { rgb } from "./Console.ts";
 import { easings } from "./Easings.ts";
-import type { Easing, Vec2, Vec3 } from "./Types.ts";
+import type { BinaryByteSizeUnit, DecByteSizeUnit, Easing, Vec2, Vec3 } from "./Types.ts";
 
 /**
  * Recursively sets the precision of numbers in an object, array, or number.
@@ -168,24 +168,26 @@ export function msToTimeString(time: number): string {
 /**
  * Generate a string that formats a count of bytes into a human readable unit.
  * @param bytes The number of bytes.
- * @param unit The unit to format to. Leave blank for the largest possible unit that results in an output >= 1 for this many bytes.
+ * @param unit The unit to format the byte count to. This can also be set to an auto setting which with find teh largest byte from the binary or decimal unit sets that result in an output >= 1. (Default - "Auto Decimal Unit")
  */
-export function bytesToString(bytes: number, unit?: "GB" | "GiB" | "MB" | "MiB" | "KB" | "KiB"): string {
-	const unitMappings: Record<Exclude<typeof unit, undefined>, number> = {
-		GB: 1000000000,
-		GiB: 1024 * 1024 * 1024,
-		KB: 1000,
+export function bytesToString(bytes: number, unit: BinaryByteSizeUnit | DecByteSizeUnit | "Auto Binary Unit" | "Auto Decimal Unit" = "Auto Decimal Unit"): string {
+	const binaryUnits: Record<BinaryByteSizeUnit, number> = {
 		KiB: 1024,
-		MB: 1000000,
-		MiB: 1024 * 1024
+		MiB: 1024 * 1024,
+		GiB: 1024 * 1024 * 1024
 	};
-	if (!unit) {
-		const orderedMappings = Object.entries(unitMappings).sort((a, b) => b[1] - a[1]);
+	const decUnits: Record<DecByteSizeUnit, number> = {
+		KB: 1000,
+		MB: 1000 * 1000,
+		GB: 1000 * 1000 * 1000
+	};
+	if (!(unit in binaryUnits) && !(unit in decUnits)) {
+		const orderedMappings = Object.entries(unit === "Auto Binary Unit" ? binaryUnits : decUnits).sort((a, b) => b[1] - a[1]);
 		let index = 0;
-		while (orderedMappings[index][1] > index && index < orderedMappings.length - 1) index++;
-		unit = orderedMappings[index][0] as keyof typeof unitMappings;
+		while (index < orderedMappings.length && bytes < orderedMappings[index][1]) index++;
+		unit = orderedMappings[index][0] as BinaryByteSizeUnit | DecByteSizeUnit;
 	}
-	return `${rgb(255, 255, 0)}${decimals(bytes / unitMappings[unit], 3)}${unit}\x1b[0m`;
+	return `${rgb(255, 255, 0)}${decimals(bytes / Object.assign(decUnits, binaryUnits)[unit as BinaryByteSizeUnit | DecByteSizeUnit], 3)}${unit}\x1b[0m`;
 }
 
 /**
