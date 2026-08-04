@@ -184,7 +184,7 @@ export function bytesToString(bytes: number, unit: BinaryByteSizeUnit | DecByteS
 	if (!(unit in binaryUnits) && !(unit in decUnits)) {
 		const orderedMappings = Object.entries(unit === "Auto Binary Unit" ? binaryUnits : decUnits).sort((a, b) => b[1] - a[1]);
 		let index = 0;
-		while (index < orderedMappings.length && bytes < orderedMappings[index][1]) index++;
+		while (index < orderedMappings.length - 1 && bytes < orderedMappings[index][1]) index++;
 		unit = orderedMappings[index][0] as BinaryByteSizeUnit | DecByteSizeUnit;
 	}
 	return `${rgb(255, 255, 0)}${decimals(bytes / Object.assign(decUnits, binaryUnits)[unit as BinaryByteSizeUnit | DecByteSizeUnit], 3)}${unit}\x1b[0m`;
