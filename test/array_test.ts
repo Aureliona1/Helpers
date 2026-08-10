@@ -1,5 +1,4 @@
-import { arrFromFunction, ArrOp, arrRem, concatTypedArrays, RandomArray } from "../src/Arrays.ts";
-import { compare } from "../src/Misc.ts";
+import { arrRem, compare, arrFromFunction, RandomArray, ArrOp, concatTypedArrays } from "@aurellis/helpers";
 import { assert } from "./assert.ts";
 
 Deno.test({

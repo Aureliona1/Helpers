@@ -1,26 +1,7 @@
-import { ArrOp } from "./Arrays.ts";
-import { sleepSync } from "./Misc.ts";
-import { clamp, decimals, lerp, mapRange, msToTimeString } from "./Numbers.ts";
-import type { ClogSettings } from "./Types.ts";
-
-/**
- * A string containing the ANSI escape code to clear the previous line in the console.
- */
-export const resetLineString = "\x1b[1A\x1b[0K";
-
-let progressStringLogCount = 0;
-/**
- * The string to be logged in both versions of progressRepeat.
- * @param elapsed The total elapsed time string.
- * @param remaining The total remaining time string
- * @param percent The current percent.
- * @param source The source of the log.
- */
-function progressString(elapsed: number, remaining: number, percent: number, source?: string): string {
-	const el = msToTimeString(elapsed);
-	const rem = msToTimeString(remaining);
-	return `${clogString("Log", source)} [Elapsed: ${rgb(100, 150, 255) + el}\x1b[0m | est. remaining: ${rgb(100, 150, 255) + rem}\x1b[0m ] ${percent}% complete${".".repeat(progressStringLogCount % 4)}`;
-}
+import { lerp, mapRange } from "./math/interpolation.ts";
+import { clamp, decimals } from "./math/math.ts";
+import { ArrOp } from "./object/array.ts";
+import { clogString, progressString, resetLineString, rgb } from "./string.ts";
 
 /**
  * Repeat code a certain number of times, logging the progress for each iteration.
@@ -123,54 +104,6 @@ export function fpsRepeat(rep: number, fps: number, c: (i: number) => void) {
 }
 
 /**
- * Generates an RGB code to color all following text in the console. Reset this with \x1b[0m.
- * @param red The red value (0 - 255).
- * @param green The green value (0 - 255).
- * @param blue The blue value (0 - 255).
- * @param bg Whether to affect the foreground color or the background (Default - false).
- */
-export const rgb = (r: number, g: number, b: number, bg = false): string => "\x1b[" + (bg ? 48 : 38) + ";2;" + (Math.round(r) % 256) + ";" + (Math.round(g) % 256) + ";" + (Math.round(b) % 256) + "m";
-
-const scriptStartTime = Date.now();
-let globalClogSettings: ClogSettings = {
-	timeFormat: "System Time",
-	logSymbol: "*",
-	warnSymbol: "!",
-	errorSymbol: "!"
-};
-
-/**
- * Update the settings that {@link clog} uses for logging.
- * @param newSettings A partial clog settings object that indicates the properties to update.
- */
-export function clogSettingsUpdate(newSettings: Partial<ClogSettings>) {
-	globalClogSettings = { ...globalClogSettings, ...newSettings };
-}
-
-/**
- * Generate the string that is prepended to every message logged with {@link clog}.
- * @param errorLevel The error level of the log message.
- * @param source The source of the log message.
- */
-export function clogString(errorLevel: "Log" | "Warning" | "Error" = "Log", source = "main"): string {
-	const time = () => {
-		switch (globalClogSettings.timeFormat) {
-			case "System Time":
-				return new Date().toTimeString().substring(0, 8);
-			case "This Script Run":
-				return msToTimeString(Date.now() - scriptStartTime);
-		}
-	};
-	if (errorLevel == "Warning") {
-		return `${rgb(255, 255, 0)}[${globalClogSettings.warnSymbol}] \x1b[90m[${time()}] \x1b[90m[${source}] ${rgb(255, 255, 0)}WARNING:\x1b[0m`;
-	} else if (errorLevel == "Error") {
-		return `${rgb(255, 0, 0)}[${globalClogSettings.errorSymbol}] \x1b[90m[${time()}] \x1b[90m[${source}] ${rgb(255, 0, 0)}ERROR:\x1b[0m`;
-	} else {
-		return `\x1b[34m[${globalClogSettings.logSymbol}] \x1b[90m[${time()}] \x1b[90m[${source}]\x1b[0m`;
-	}
-}
-
-/**
  * Log a message to the console with prepended information about the source, type, and timestamp of the log.
  * @param msg The message to log.
  * @param error The type of message (Default - Log).
@@ -214,4 +147,26 @@ export function graphValues(values: number[], sampleCount: number = Deno.console
 			}
 		}
 	}
+}
+
+/**
+ * Block the main thread for a set time.
+ * @param milliseconds The time (ms) to wait.
+ */
+export function sleepSync(milliseconds: number) {
+	const date = Date.now();
+	let currentDate;
+	if (milliseconds >= 0) {
+		do {
+			currentDate = Date.now();
+		} while (currentDate - date < milliseconds);
+	}
+}
+
+/**
+ * Pause execution for a set time, must be used with await.
+ * @param milliseconds The time (ms) to wait.
+ */
+export async function sleep(milliseconds: number): Promise<void> {
+	return await new Promise(r => setTimeout(r, milliseconds));
 }

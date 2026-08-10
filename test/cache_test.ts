@@ -1,6 +1,4 @@
-import { Cache } from "../src/Cache.ts";
-import { pathAccessible } from "../src/Files.ts";
-import { compare } from "../src/Misc.ts";
+import { Cache, pathAccessible, compare } from "@aurellis/helpers";
 import { assert } from "./assert.ts";
 
 const path = "test/cache.json";

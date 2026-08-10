@@ -1,7 +1,8 @@
 // deno-lint-ignore-file no-explicit-any
-import { clog } from "./Console.ts";
-import { ensureFile, ensureFileSync } from "./Files.ts";
-import { compare } from "./Misc.ts";
+
+import { ensureFile, ensureFileSync } from "./filesystem.ts";
+import { compare } from "./object/object.ts";
+import { clog } from "./process.ts";
 
 /**
  * Access and modify a cache file.

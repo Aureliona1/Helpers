@@ -1,4 +1,4 @@
-import { clog } from "./Console.ts";
+import { clog } from "./process.ts";
 
 /**
  * Check whether a file or directory path can be accessed.

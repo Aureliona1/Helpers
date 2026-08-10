@@ -1,8 +1,8 @@
 // deno-lint-ignore-file no-explicit-any
-import { ArrOp } from "./Arrays.ts";
-import { rgb } from "./Console.ts";
-import { easings } from "./Easings.ts";
-import type { BinaryByteSizeUnit, DecByteSizeUnit, Easing, Vec2, Vec3 } from "./Types.ts";
+
+import { ArrOp } from "../object/array.ts";
+import type { Easing, Vec2, Vec3, Vec4 } from "../type.ts";
+import { lerp, mapRange } from "./interpolation.ts";
 
 /**
  * Recursively sets the precision of numbers in an object, array, or number.
@@ -48,7 +48,7 @@ function fastSeed(seed: number): number {
 }
 
 /**
- * Generate a random number.
+ * Generate a random number. The generator uses a 32-bit integer internally, meaning that this function can generate at most 2^32 distinct numbers.
  * @param min The minimum possible number to generate (inclusive).
  * @param max The maximum possible number to generate (exclusive).
  * @param seed The optional seed to apply to the generator (leave blank for random).
@@ -126,71 +126,6 @@ export function distance<T extends number[]>(vec1: T, vec2: T): number {
 }
 
 /**
- * Finds the midpoint between two points.
- * @param p1 The first point.
- * @param p2 The second point (must be in the same dimension as the first).
- * @param floor Whether to floor the result.
- */
-export function midPoint<T extends number[]>(p1: T, p2: T, floor = false): T {
-	const mp = p1.map((x, i) => (x + p2[i]) / 2);
-	return (floor ? mp.map(Math.floor) : mp) as T;
-}
-
-/**
- * Get the hours, minutes, seconds, ms from a total ms value.
- * @param time The time in ms.
- */
-export function msToTimeString(time: number): string {
-	time = Math.round(time);
-	let ms = 0,
-		s = 0,
-		m = 0,
-		h = 0;
-	if (time > 3600000) {
-		h = Math.floor(time / 3600000);
-		time -= 3600000 * h;
-	}
-	if (time > 60000) {
-		m = Math.floor(time / 60000);
-		time -= 60000 * m;
-	}
-	if (time > 1000) {
-		s = Math.floor(time / 1000);
-		time -= 1000 * s;
-	}
-	if (time) {
-		ms = time;
-		time -= ms;
-	}
-	return `${h ? h + "h:" : ""}${m ? m + "m:" : ""}${s ? s + "s:" : ""}${ms.toString().padStart(3, "0")}ms`;
-}
-
-/**
- * Generate a string that formats a count of bytes into a human readable unit.
- * @param bytes The number of bytes.
- * @param unit The unit to format the byte count to. This can also be set to an auto setting which with find teh largest byte from the binary or decimal unit sets that result in an output >= 1. (Default - "Auto Decimal Unit")
- */
-export function bytesToString(bytes: number, unit: BinaryByteSizeUnit | DecByteSizeUnit | "Auto Binary Unit" | "Auto Decimal Unit" = "Auto Decimal Unit"): string {
-	const binaryUnits: Record<BinaryByteSizeUnit, number> = {
-		KiB: 1024,
-		MiB: 1024 * 1024,
-		GiB: 1024 * 1024 * 1024
-	};
-	const decUnits: Record<DecByteSizeUnit, number> = {
-		KB: 1000,
-		MB: 1000 * 1000,
-		GB: 1000 * 1000 * 1000
-	};
-	if (!(unit in binaryUnits) && !(unit in decUnits)) {
-		const orderedMappings = Object.entries(unit === "Auto Binary Unit" ? binaryUnits : decUnits).sort((a, b) => b[1] - a[1]);
-		let index = 0;
-		while (index < orderedMappings.length - 1 && bytes < orderedMappings[index][1]) index++;
-		unit = orderedMappings[index][0] as BinaryByteSizeUnit | DecByteSizeUnit;
-	}
-	return `${rgb(255, 255, 0)}${decimals(bytes / Object.assign(decUnits, binaryUnits)[unit as BinaryByteSizeUnit | DecByteSizeUnit], 3)}${unit}\x1b[0m`;
-}
-
-/**
  * Multiply two rectangular or square matrices
  * @param mat1 The values for mat one (e.g., [[1,2,3],[4,5,6]])
  * @param mat2 The values for mat two (e.g., [[1,2],[3,4],[5,6]])
@@ -256,17 +191,6 @@ export function rotateVector2D(start: Vec2, end: Vec2, rot: number): Vec2 {
 }
 
 /**
- * Interpolate between two numbers by a fraction, with optional easing.
- * @param start The start point.
- * @param end The end point.
- * @param fraction (0-1) The fraction between the start and end point.
- * @param easing The easing to use on the interpolation.
- */
-export function lerp(start: number, end: number, fraction: number, easing: Easing = "easeLinear"): number {
-	return easings[easing](fraction) * (end - start) + start;
-}
-
-/**
  * Returns a function of a waveform with period 1 and amplitude 1.
  */
 export const waveform = {
@@ -279,24 +203,56 @@ export const waveform = {
 };
 
 /**
- * Maps a value from an existing range into another, also works recursively on arrays or objects.
- * @param val The value, array, or object of values to map.
- * @param from The range from which to map.
- * @param to The range to map to.
- * @param precision The number of decimal points to round to (can be negative to round to tens, hundreds etc.).
- * @param easing Optional easing to apply to the range.
+ * Convert hsva to rgba.
+ * @param color The hsva color (linear values 0-1).
  */
-export function mapRange<T extends number | string | any[] | Record<string, any>>(val: T, from: Vec2, to: Vec2, precision = 5, easing?: Easing): T {
-	if (typeof val == "number") {
-		return (Math.floor(Math.pow(10, precision) * lerp(to[0], to[1], (val - from[0]) / (from[1] - from[0]), easing)) / Math.pow(10, precision)) as T;
-	} else if (!(typeof val == "number" || typeof val == "object")) {
-		return val;
-	} else if (Array.isArray(val)) {
-		(val as any[]) = val.map(x => mapRange(x, from, to, precision));
-	} else {
-		Object.keys(val).forEach(key => {
-			val[key] = mapRange(val[key], from, to, precision);
-		});
-	}
-	return val;
+export function hsv2rgb(color: Vec4): Vec4 {
+	const [h, s, v, a] = color;
+	const f = (n: number, k = (n + h * 6) % 6) => v - v * s * Math.max(Math.min(k, 4 - k, 1), 0);
+	return [f(5), f(3), f(1), a] as Vec4;
+}
+
+/**
+ * Convert rgba to hsva.
+ * @param color The rgba color (linear rgb 0-1).
+ */
+export function rgb2hsv(color: Vec4): Vec4 {
+	const max = Math.max(color[0], color[1], color[2]);
+	const min = Math.min(color[0], color[1], color[2]);
+	const delta = max - min;
+	const h = delta === 0 ? 0 : max === color[0] ? (color[1] - color[2]) / delta + (color[1] < color[2] ? 6 : 0) : max === color[1] ? (color[2] - color[0]) / delta + 2 : (color[0] - color[1]) / delta + 4;
+	const s = max === 0 ? 0 : delta / max;
+	return [h / 6, s, max, color[3]] as Vec4;
+}
+
+/**
+ * Convert byte value hsv to gamma rgb (all values are 0-255).
+ * @param hsv Uint8Array of hsv (optional a) values. This will be mutated by the function.
+ */
+export function byteHsvToRgb(hsv: Uint8Array): Uint8Array {
+	const h = hsv[0] / 255,
+		s = hsv[1] / 255,
+		v = hsv[2] / 255;
+	const f = (n: number, k = (n + h * 6) % 6) => v - v * s * Math.max(Math.min(k, 4 - k, 1), 0);
+	hsv[0] = f(5) * 255;
+	hsv[1] = f(3) * 255;
+	hsv[2] = f(1) * 255;
+	return hsv;
+}
+
+/**
+ * Convert gamma rgb to byte value hsv (all values are 0-255).
+ * @param rgb Uint8Array of rgb (optional a) values. This will be mutated by the function.
+ */
+export function byteRgbToHsv(rgb: Uint8Array): Uint8Array {
+	const r = rgb[0] / 255,
+		g = rgb[1] / 255,
+		b = rgb[2] / 255;
+	const max = Math.max(r, g, b);
+	const min = Math.min(r, g, b);
+	const delta = max - min;
+	rgb[0] = Math.round((255 * (delta === 0 ? 0 : max === r ? (g - b) / delta + (g < b ? 6 : 0) : max === g ? (b - r) / delta + 2 : (r - g) / delta + 4)) / 6);
+	rgb[1] = max === 0 ? 0 : (delta * 255) / max;
+	rgb[2] = max * 255;
+	return rgb;
 }

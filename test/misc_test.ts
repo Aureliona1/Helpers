@@ -1,4 +1,4 @@
-import { byteHsvToRgb, byteRgbToHsv, compare, deepCopy, hsv2rgb, rgb2hsv, sleep, sleepSync, toArray, TwoWayMap } from "../src/Misc.ts";
+import { deepCopy, compare, sleepSync, sleep, hsv2rgb, rgb2hsv, byteHsvToRgb, byteRgbToHsv, toArray, TwoWayMap } from "@aurellis/helpers";
 import { assert } from "./assert.ts";
 
 Deno.test({

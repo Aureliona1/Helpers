@@ -1,7 +1,9 @@
 // deno-lint-ignore-file no-explicit-any
-import { compare } from "./Misc.ts";
-import { lerp, random } from "./Numbers.ts";
-import type { Easing, IntTypedArray, NumberArray, TypedArray, UintTypedArray, WritableArrayLike } from "./Types.ts";
+
+import { lerp } from "../math/interpolation.ts";
+import { random } from "../math/math.ts";
+import type { Easing, IntTypedArray, NumberArray, TypedArray, UintTypedArray, WritableArrayLike } from "../type.ts";
+import { compare } from "./object.ts";
 
 /**
  * Remove entries from an array and return the modified array. Affects the original array, therefore you do not need to reassign.
@@ -432,4 +434,39 @@ export function concatTypedArrays<T extends TypedArray>(...arrays: T[]): T {
 		offset += b.length;
 	}
 	return out;
+}
+
+/**
+ * Attempt to coerce the value into an array.
+ * @param value The value to coerce.
+ * @returns Array form of the input value, or null if coercion failed.
+ */
+export function toArray(value: any): any[] | null {
+	if (Array.isArray(value)) {
+		return value;
+	}
+	if (value instanceof ArrayBuffer) {
+		return Array.from(new Uint8Array(value));
+	}
+
+	// Typed Arrays and DataViews
+	if (ArrayBuffer.isView(value)) {
+		if (value instanceof DataView) {
+			const arr = new Uint8Array(value.buffer, value.byteOffset, value.byteLength);
+			return Array.from(arr);
+		} else {
+			return Array.from(value as TypedArray);
+		}
+	}
+
+	// Other ArrayLikes
+	if (value != null && typeof value.length === "number") {
+		const result = [];
+		for (let i = 0; i < value.length; i++) {
+			result.push(value[i]);
+		}
+		return result;
+	}
+
+	return null;
 }
