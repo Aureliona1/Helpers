@@ -1,4 +1,4 @@
-export * from "./src/cache.ts";
+export * from "./src/caching.ts";
 export * from "./src/filesystem.ts";
 export * from "./src/math/easing.ts";
 export * from "./src/math/interpolation.ts";

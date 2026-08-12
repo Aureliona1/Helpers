@@ -1,4 +1,4 @@
-import { Cache } from "../src/cache.ts";
+import { Cache } from "../src/caching.ts";
 import { pathAccessible } from "../src/filesystem.ts";
 import { compare } from "../src/object/object.ts";
 import { assert } from "./assert.ts";
