@@ -1,4 +1,4 @@
-import { arrFromFunction, ArrOp, clamp, clampLoop, compare, decimals, distance, midPoint, random, rotateVector } from "@aurellis/helpers";
+import { arrFromFunction, ArrOp, clamp, clampLoop, compare, decimals, distance, distance2, midPoint, random, rotateVector } from "@aurellis/helpers";
 import { assert } from "./assert.ts";
 
 Deno.test({
@@ -57,6 +57,14 @@ Deno.test({
 	fn: () => {
 		assert(distance([0, 0], [1, 1]) === Math.sqrt(2));
 		assert(distance([0, 0, 0], [1, 1, 1]) === Math.sqrt(3));
+	}
+});
+
+Deno.test({
+	name: "Distance Squared",
+	fn: () => {
+		assert(distance2([0, 0], [1, 1]) === 2);
+		assert(distance2([0, 0, 0], [1, 1, 1]) === 3);
 	}
 });
 

@@ -126,6 +126,15 @@ export function distance<T extends number[]>(vec1: T, vec2: T): number {
 }
 
 /**
+ * Distance squared function. A faster distance function that does not perform a square root. Take the square root of this function to get true euclidean distance.
+ * @param vec1 The first vector.
+ * @param vec2 The second vector.
+ */
+export function distance2<T extends number[]>(vec1: T, vec2: T): number {
+	return ArrOp.subtract(vec2, vec1).reduce((x, y) => x + y * y);
+}
+
+/**
  * Multiply two rectangular or square matrices
  * @param mat1 The values for mat one (e.g., [[1,2,3],[4,5,6]])
  * @param mat2 The values for mat two (e.g., [[1,2],[3,4],[5,6]])
