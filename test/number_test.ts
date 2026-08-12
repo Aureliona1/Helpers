@@ -1,4 +1,7 @@
-import { arrFromFunction, ArrOp, clamp, clampLoop, compare, decimals, distance, distance2, midPoint, random, rotateVector } from "@aurellis/helpers";
+import { midPoint } from "../src/math/interpolation.ts";
+import { clamp, clampLoop, decimals, distance, distance2, random, rotateVector } from "../src/math/math.ts";
+import { arrFromFunction, ArrOp } from "../src/object/array.ts";
+import { compare } from "../src/object/object.ts";
 import { assert } from "./assert.ts";
 
 Deno.test({
