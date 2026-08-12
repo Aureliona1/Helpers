@@ -131,7 +131,7 @@ export function distance<T extends number[]>(vec1: T, vec2: T): number {
  * @param vec2 The second vector.
  */
 export function distance2<T extends number[]>(vec1: T, vec2: T): number {
-	return ArrOp.subtract(vec2, vec1).reduce((x, y) => x + y * y);
+	return ArrOp.subtract(vec2, vec1).reduce((x, y) => x + y * y, 0);
 }
 
 /**
