@@ -1,5 +1,5 @@
 import { midPoint } from "../src/math/interpolation.ts";
-import { clamp, clampLoop, decimals, distance, distance2, random, rotateVector } from "../src/math/math.ts";
+import { clamp, clampLoop, closestFactors, decimals, distance, distance2, random, rotateVector } from "../src/math/math.ts";
 import { arrFromFunction, ArrOp } from "../src/object/array.ts";
 import { compare } from "../src/object/object.ts";
 import { assert } from "./assert.ts";
@@ -85,5 +85,16 @@ Deno.test({
 		assert(compare(rotateVector([0, 0, 0], [0, 0, 1], [90, 0, 0]), [0, -1, 0]));
 		// Maintains magnitude
 		assert(compare(decimals(distance(rotateVector([1, 2, 3], [5, 4, 3], [45, 90, -45]), [1, 2, 3]), 3), decimals(distance([1, 2, 3], [5, 4, 3]), 3)));
+	}
+});
+
+Deno.test({
+	name: "Closest Factors",
+	fn: () => {
+		assert(compare(closestFactors(0), [1, 0]));
+		assert(compare(closestFactors(1), [1, 1]));
+		assert(compare(closestFactors(4), [2, 2]));
+		assert(compare(closestFactors(12), [3, 4]));
+		assert(compare(closestFactors(-4), [-2, 2]));
 	}
 });

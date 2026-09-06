@@ -265,3 +265,17 @@ export function byteRgbToHsv(rgb: Uint8Array): Uint8Array {
 	rgb[2] = max * 255;
 	return rgb;
 }
+
+/**
+ * Finds the two integer factors of a number that are closest to the square root of said number.
+ * @param n The number to factorise.
+ */
+export function closestFactors(n: number): Vec2 {
+	let negative = false;
+	if (n < 0) {
+		negative = true;
+		n = Math.abs(n);
+	}
+	for (let a = Math.floor(Math.sqrt(n)); a > 1; a--) if (n % a === 0) return [negative ? -a : a, n / a];
+	return [negative ? -1 : 1, n];
+}
