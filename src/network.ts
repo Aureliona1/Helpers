@@ -36,28 +36,30 @@ export class FetchQueue {
 	 * @param priority A number that signifies the priority of this request. 0 is the highest priority and will be executed first.
 	 */
 	waitTurn(priority = 5): Promise<() => void> {
-		return new Promise(res => {
+		return new Promise(resolve => {
 			const unlock = () => {
 				this.active--;
 				this.lastReleaseTime = Date.now();
 				this.next();
 			};
 
-			const tryAcquire = async () => {
-				if (this.active < this.maxRequests) {
-					await this.waitForDelay();
-					this.active++;
-					res(unlock);
-				} else {
-					if (this.queue[priority] == undefined) {
-						this.queue[priority] = [tryAcquire];
-					} else {
-						this.queue[priority].push(tryAcquire);
-					}
-				}
+			const acquire = async () => {
+				this.active++;
+
+				await this.waitForDelay();
+
+				resolve(unlock);
 			};
 
-			tryAcquire();
+			if (this.active < this.maxRequests) {
+				acquire();
+			} else {
+				if (this.queue[priority] === undefined) {
+					this.queue[priority] = [acquire];
+				} else {
+					this.queue[priority].push(acquire);
+				}
+			}
 		});
 	}
 

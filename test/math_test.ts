@@ -1,5 +1,5 @@
 import { midPoint } from "../src/math/interpolation.ts";
-import { clamp, clampLoop, closestFactors, decimals, distance, distance2, random, rotateVector } from "../src/math/math.ts";
+import { byteHsvToRgb, byteRgbToHsv, clamp, clampLoop, closestFactors, decimals, distance, distance2, hsv2rgb, random, rgb2hsv, rotateVector } from "../src/math/math.ts";
 import { arrFromFunction, ArrOp } from "../src/object/array.ts";
 import { compare } from "../src/object/object.ts";
 import { assert } from "./assert.ts";
@@ -72,13 +72,6 @@ Deno.test({
 });
 
 Deno.test({
-	name: "Mid Point",
-	fn: () => {
-		assert(compare(midPoint([0, 0, 0], [1, 1, 1]), [1 / 2, 1 / 2, 1 / 2]));
-	}
-});
-
-Deno.test({
 	name: "Rotate Vector",
 	fn: () => {
 		// Rotate
@@ -96,5 +89,45 @@ Deno.test({
 		assert(compare(closestFactors(4), [2, 2]));
 		assert(compare(closestFactors(12), [3, 4]));
 		assert(compare(closestFactors(-4), [-2, 2]));
+	}
+});
+
+Deno.test({
+	name: "HSV to RGB",
+	fn: () => {
+		assert(compare(hsv2rgb([0, 1, 1, 1]), [1, 0, 0, 1]));
+		assert(compare(hsv2rgb([0, 0, 1, 1]), [1, 1, 1, 1]));
+		assert(compare(hsv2rgb([1 / 3, 1, 1, 1]), [0, 1, 0, 1]));
+		assert(compare(hsv2rgb([0, 1, 0, 1]), [0, 0, 0, 1]));
+	}
+});
+
+Deno.test({
+	name: "RGB to HSV",
+	fn: () => {
+		assert(compare(rgb2hsv([1, 0, 0, 1]), [0, 1, 1, 1]));
+		assert(compare(rgb2hsv([1, 1, 1, 1]), [0, 0, 1, 1]));
+		assert(compare(rgb2hsv([0, 1, 0, 1]), [1 / 3, 1, 1, 1]));
+		assert(compare(rgb2hsv([0, 0, 0, 1]), [0, 0, 0, 1]));
+	}
+});
+
+Deno.test({
+	name: "Byte HSV to RGB",
+	fn: () => {
+		assert(compare(byteHsvToRgb(new Uint8Array([0, 255, 255, 255])), new Uint8Array([255, 0, 0, 255])));
+		assert(compare(byteHsvToRgb(new Uint8Array([0, 0, 255, 255])), new Uint8Array([255, 255, 255, 255])));
+		assert(compare(byteHsvToRgb(new Uint8Array([255 / 3, 255, 255, 255])), new Uint8Array([0, 255, 0, 255])));
+		assert(compare(byteHsvToRgb(new Uint8Array([0, 255, 0, 255])), new Uint8Array([0, 0, 0, 255])));
+	}
+});
+
+Deno.test({
+	name: "Byte RGB to HSV",
+	fn: () => {
+		assert(compare(byteRgbToHsv(new Uint8Array([255, 0, 0, 255])), new Uint8Array([0, 255, 255, 255])));
+		assert(compare(byteRgbToHsv(new Uint8Array([255, 255, 255, 255])), new Uint8Array([0, 0, 255, 255])));
+		assert(compare(byteRgbToHsv(new Uint8Array([0, 255, 0, 255])), new Uint8Array([255 / 3, 255, 255, 255])));
+		assert(compare(byteRgbToHsv(new Uint8Array([0, 0, 0, 255])), new Uint8Array([0, 0, 0, 255])));
 	}
 });

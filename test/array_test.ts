@@ -1,5 +1,4 @@
-import { arrFromFunction, ArrOp, arrRem, concatTypedArrays, RandomArray } from "../src/object/array.ts";
-import { compare } from "../src/object/object.ts";
+import { arrFromFunction, ArrOp, arrRem, compare, concatTypedArrays, RandomArray, toArray } from "@aurellis/helpers";
 import { assert } from "./assert.ts";
 
 Deno.test({
@@ -145,6 +144,14 @@ Deno.test({
 		assert(arrFromFunction(256, x => x).every(x => typedShuffle.includes(x)));
 		// Ensure that at least one number has changed position.
 		assert(typedShuffle.some((x, i) => x !== i));
+
+		// Edge cases, empty arr
+		const empty = ArrOp.shuffle([]);
+		assert(compare(empty, []));
+
+		// 1-element
+		const one = ArrOp.shuffle([1]);
+		assert(compare(one, [1]));
 	}
 });
 
@@ -184,9 +191,38 @@ Deno.test({
 });
 
 Deno.test({
-	name: "Array Mode",
+	name: "Array Mode Lite",
 	fn: () => {
 		assert(compare(ArrOp.mode([1, 2, 3, 2]), 2));
+		assert(compare(ArrOp.mode([]), undefined));
+		assert(
+			compare(
+				ArrOp.mode([
+					[1, 2],
+					[2, 3],
+					[1, 2]
+				]),
+				[1, 2]
+			)
+		);
+	}
+});
+
+Deno.test({
+	name: "Array Mode Full",
+	fn: () => {
+		assert(compare(ArrOp.mode([1, 2, 3, 2]), 2));
+		assert(compare(ArrOp.mode([]), undefined));
+		assert(
+			compare(
+				ArrOp.mode([
+					[1, 2],
+					[2, 3],
+					[1, 2]
+				]),
+				[1, 2]
+			)
+		);
 	}
 });
 
@@ -260,5 +296,14 @@ Deno.test({
 				]
 			)
 		);
+	}
+});
+
+Deno.test({
+	name: "To Array",
+	fn: () => {
+		assert(compare(toArray(new Uint8Array([1, 2, 3, 4])), [1, 2, 3, 4]));
+		assert(compare(toArray([1, 2, 3]), [1, 2, 3]));
+		assert(compare(toArray({}), null));
 	}
 });

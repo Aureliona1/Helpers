@@ -238,23 +238,50 @@ export class ArrOp<T extends NumberArray> {
 	}
 
 	/**
-	 * Get the most common value (mode) in the array.
+	 * O(n) function to find the most common element in an array. This uses the string representation of each item, so may be error prone for complex objects.
 	 * @param arr The array to find the mode of.
+	 * @returns A reference to the last instance of the mode of the array.
 	 */
-	static mode(arr: NumberArray): number {
-		const out: NumberArray[] = [];
-		const set = [...new Set(arr)];
-		for (let i = 0; i < set.length; i++) {
-			let instances = 0;
-			for (let j = 0; j < arr.length; j++) {
-				if (set[i] == arr[j]) {
-					instances++;
-				}
+	static mode<T>(arr: WritableArrayLike<T>): T {
+		const ts = (e: T) => `${e}`;
+		const counts: Record<string, number> = {};
+		let maxIndex = 0;
+		let maxCount = 0;
+		for (let i = 0; i < arr.length; i++) {
+			const s = ts(arr[i]);
+			counts[s] ??= 0;
+			counts[s]++;
+			if (counts[s] > maxCount) {
+				maxCount = counts[s];
+				maxIndex = i;
 			}
-			out.push([set[i], instances]);
 		}
-		out.sort((a, b) => a[1] - b[1]);
-		return out[out.length - 1][0];
+		return arr[maxIndex];
+	}
+
+	/**
+	 * O(n^2) function to find the most common element in an array. This uses a comparator function to test equality.
+	 * @param arr The array to find the mode of.
+	 * @param comparator The comparator function. (Default - {@link compare compare(a, b)})
+	 * @returns A reference to the last instance of the mode of the array.
+	 */
+	static modeFull<T>(arr: ArrayLike<T>, comparator: (a: T, b: T) => boolean = compare): T {
+		const countElement = (e: T) => {
+			let count = 0;
+			for (let i = 0; i < arr.length; i++) if (comparator(arr[i], e)) count++;
+			return count;
+		};
+		if (arr.length === 0) return arr[0];
+		let count = countElement(arr[0]);
+		let item = arr[0];
+		for (let i = 1; i < arr.length; i++) {
+			const thisCount = countElement(arr[i]);
+			if (thisCount > count) {
+				count = thisCount;
+				item = arr[i];
+			}
+		}
+		return item;
 	}
 
 	/**
@@ -322,7 +349,7 @@ export class ArrOp<T extends NumberArray> {
 	 * ArrOp.deDuplicateFull([1, 2, 3, 4, 5, 4, 3, 2, 1]) // [5, 4, 3, 2, 1]
 	 * ```
 	 */
-	static deDuplicateFull<V, T extends WritableArrayLike<V>>(array: WritableArrayLike<V>, condition: (a: V, b: V) => boolean = (a, b) => compare(a, b)): T {
+	static deDuplicateFull<V, T extends WritableArrayLike<V>>(array: WritableArrayLike<V>, condition: (a: V, b: V) => boolean = compare): T {
 		const Constructor = array.constructor as {
 			new (length: number): T;
 		};
@@ -398,7 +425,7 @@ export class ArrOp<T extends NumberArray> {
 	 * Get the most common value (mode) of the array.
 	 */
 	get mode(): number {
-		return ArrOp.mode(this.arr);
+		return ArrOp.modeFull(this.arr);
 	}
 
 	/**
