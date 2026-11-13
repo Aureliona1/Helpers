@@ -2,49 +2,62 @@
 
 import { ArrOp } from "../object/array.ts";
 import type { Easing, Vec2, Vec3, Vec4 } from "../type.ts";
-import { lerp, mapRange } from "./interpolation.ts";
+import { mapNumbers, roundTo } from "./internal.ts";
+import { lerp } from "./interpolation.ts";
 
 /**
  * Recursively sets the precision of numbers in an object, array, or number.
+ * Arrays and objects are copied, the input is not mutated.
  * @param o The object, or number to set the precision of.
  * @param precision The number of decimals.
  * @param method (Default - round) The method for rounding.
  */
 export function decimals<T extends string | number | any[] | Record<string, any>>(o: T, precision = 5, method: "floor" | "round" | "ceil" = "round"): T {
-	if (typeof o == "number") {
-		return (Math[method](o * Math.pow(10, precision)) / Math.pow(10, precision)) as T;
-	} else if (!(typeof o == "number" || typeof o == "object")) {
-		return o;
-	} else if (Array.isArray(o)) {
-		(o as any[]) = o.map(x => decimals(x, precision, method));
-	} else {
-		Object.keys(o).forEach(key => {
-			o[key] = decimals(o[key], precision, method);
-		});
-	}
-	return o;
+	return mapNumbers(o, x => roundTo(x, precision, method));
 }
 
 /**
- * Generates a number based on the character codes in a string.
+ * Generates the FNV-1a hash of a string.
  */
-export function stringCodeToNumber(s: string): number {
-	return Array.from(s)
-		.map(x => x.charCodeAt(0))
-		.reduce((x, y) => x + y);
+export function stringCodeToNumber(input: string): number {
+	let hash = 0x811c9dc5; // FNV offset basis
+	const prime = 0x01000193; // FNV prime
+
+	for (let i = 0; i < input.length; i++) {
+		hash ^= input.charCodeAt(i);
+		hash = Math.imul(hash, prime);
+	}
+
+	return hash >>> 0;
 }
+
+const seedView = new DataView(new ArrayBuffer(8));
 
 /**
  * Spread a seed number across 32 bits.
+ * Works from the number's full 64-bit representation, so non-integers and very large seeds keep all of their entropy.
  */
 function fastSeed(seed: number): number {
-	let x = seed * 0x9e3779b1; // golden ratio prime
+	seedView.setFloat64(0, seed + 0); // + 0 normalises -0 to 0
+	let x = seedView.getUint32(0) ^ Math.imul(seedView.getUint32(4), 0x9e3779b1); // golden ratio prime
 	x ^= x >>> 16;
 	x = Math.imul(x, 0x85ebca6b);
 	x ^= x >>> 13;
 	x = Math.imul(x, 0xc2b2ae35);
 	x ^= x >>> 16;
 	return x >>> 0;
+}
+
+/**
+ * One step of a 32-bit xorshift generator. Returns an unsigned 32-bit integer.
+ */
+function xorshift32(state: number): number {
+	// Zero is a fixed point of xorshift, so swap it for a non-zero constant.
+	let s = state || 0x9e3779b9;
+	s ^= s << 13;
+	s ^= s >>> 17;
+	s ^= s << 5;
+	return s >>> 0;
 }
 
 /**
@@ -57,63 +70,42 @@ function fastSeed(seed: number): number {
  */
 export function random(min: number, max: number, seed: number | string = Math.random(), precision = 3): number {
 	[min, max] = min > max ? [max, min] : [min, max];
-	const parsedSeed = typeof seed == "number" ? fastSeed(seed) : stringCodeToNumber(`${seed}`);
-	const xor32 = (s: number) => {
-		s ^= s << 13;
-		s ^= s >> 17;
-		s ^= s << 5;
-		return s / 0xffffffff + 0.5;
-	};
-
-	return mapRange(xor32(parsedSeed), [0, 1], [min, max], precision);
+	// FNV-1a's last characters don't spread into the high bits well, so mix the hash like a numeric seed.
+	const state = fastSeed(typeof seed == "number" ? seed : stringCodeToNumber(`${seed}`));
+	const fraction = xorshift32(state) / 0x100000000; // [0, 1)
+	// Flooring keeps max exclusive.
+	const value = roundTo(min + fraction * (max - min), precision, "floor");
+	// Flooring can drop below min when min isn't a multiple of the precision step.
+	return value < min ? roundTo(min, precision, "ceil") : value;
 }
 
 /**
  * Clamp a number within a range, also works recursively on arrays or objects.
+ * Arrays and objects are copied, the input is not mutated.
  * @param val The value, array, or object of values to clamp.
  * @param min The minimum (inclusive) value to clamp to.
  * @param max The maximum (inclusive) value to clamp to.
  */
 export function clamp<T extends number | string | any[] | Record<string, any>>(val: T, min: number, max: number): T {
-	if (typeof val == "number") {
-		return Math.max(Math.min(min, max), Math.min(Math.max(min, max), val)) as T;
-	} else if (!(typeof val == "number" || typeof val == "object")) {
-		return val;
-	} else if (Array.isArray(val)) {
-		(val as any[]) = val.map(x => clamp(x, min, max));
-	} else {
-		Object.keys(val).forEach(key => {
-			val[key] = clamp(val[key], min, max);
-		});
-	}
-	return val;
+	const lo = Math.min(min, max),
+		hi = Math.max(min, max);
+	return mapNumbers(val, x => Math.max(lo, Math.min(hi, x)));
 }
 
 /**
  * Clamps a number within a range by looping it when it extends the range on either side.
- * This function works recursively on any object or array or number.
- * @param x The number to clamp.
+ * This function works recursively on any object or array or number. Arrays and objects are copied, the input is not mutated.
+ * @param val The number, array, or object of numbers to clamp.
  * @param min The minimum (inclusive) value to clamp to.
- * @param max The maximum (inclusive) value to clamp to.
+ * @param max The maximum (exclusive) value to clamp to. Values equal to max wrap around to min.
  */
 export function clampLoop<T extends number | string | any[] | Record<string, any>>(val: T, min: number, max: number): T {
-	if (max < min) {
-		const temp = min;
-		min = max;
-		max = temp;
-	}
-	if (typeof val == "number") {
-		return (val >= 0 ? (val % (max - min)) + min : (val % (max - min)) + max - 1) as T;
-	} else if (!(typeof val == "number" || typeof val == "object")) {
-		return val;
-	} else if (Array.isArray(val)) {
-		(val as any[]) = val.map(x => clampLoop(x, min, max));
-	} else {
-		Object.keys(val).forEach(key => {
-			val[key] = clampLoop(val[key], min, max);
-		});
-	}
-	return val;
+	if (max < min) [min, max] = [max, min];
+	const range = max - min;
+	return mapNumbers(val, x => {
+		if (range === 0) return min;
+		return ((((x - min) % range) + range) % range) + min;
+	});
 }
 
 /**
@@ -142,7 +134,7 @@ export function distance2<T extends number[]>(vec1: T, vec2: T): number {
 function multiplyMats(mat1: number[][], mat2: number[][]) {
 	const md = [mat1.length, mat1[0].length],
 		nd = [mat2.length, mat2[0].length];
-	const res = new Array(md);
+	const res: number[][] = new Array(md[0]);
 	for (let i = 0; i < md[0]; i++) res[i] = new Array(nd[1]);
 
 	for (let i = 0; i < md[0]; i++) {
@@ -200,15 +192,27 @@ export function rotateVector2D(start: Vec2, end: Vec2, rot: number): Vec2 {
 }
 
 /**
+ * Wrap a number into [0, 1), including negative numbers.
+ */
+function frac(x: number): number {
+	const f = x - Math.floor(x);
+	// Tiny negative inputs can round up to exactly 1.
+	return f === 1 ? 0 : f;
+}
+
+/**
  * Returns a function of a waveform with period 1 and amplitude 1.
  */
 export const waveform = {
-	sine: (x: number): number => Math.sin(mapRange(x, [0, 1], [0, 2 * Math.PI])),
-	saw: (x: number): number => (x % 1) * 2 - 1,
-	sawInverse: (x: number): number => ((1 - x) % 1) * 2 - 1,
-	square: (x: number): number => (x % 1 < 0.5 ? -1 : 1),
-	ease: (x: number, ease: Easing, amp = 1): number => (x % 1 < 0.5 ? lerp(-amp, amp, (x % 1) * 2, ease) : lerp(amp, -amp, (x % 1) * 2 - 1, ease)),
-	triangle: (x: number): number => 1 - Math.abs(0.5 - (x % 1)) * 4
+	sine: (x: number): number => Math.sin(x * 2 * Math.PI),
+	saw: (x: number): number => frac(x) * 2 - 1,
+	sawInverse: (x: number): number => 1 - frac(x) * 2,
+	square: (x: number): number => (frac(x) < 0.5 ? -1 : 1),
+	ease: (x: number, ease: Easing, amp = 1): number => {
+		const t = frac(x);
+		return t < 0.5 ? lerp(-amp, amp, t * 2, ease) : lerp(amp, -amp, t * 2 - 1, ease);
+	},
+	triangle: (x: number): number => 1 - Math.abs(0.5 - frac(x)) * 4
 };
 
 /**
@@ -235,6 +239,13 @@ export function rgb2hsv(color: Vec4): Vec4 {
 }
 
 /**
+ * Round and clamp a value into a valid byte (0-255). Uint8Array assignment would otherwise truncate and wrap (256 -> 0).
+ */
+function toByte(v: number): number {
+	return Math.min(255, Math.max(0, Math.round(v)));
+}
+
+/**
  * Convert byte value hsv to gamma rgb (all values are 0-255).
  * @param hsv Uint8Array of hsv (optional a) values. This will be mutated by the function.
  */
@@ -243,9 +254,9 @@ export function byteHsvToRgb(hsv: Uint8Array): Uint8Array {
 		s = hsv[1] / 255,
 		v = hsv[2] / 255;
 	const f = (n: number, k = (n + h * 6) % 6) => v - v * s * Math.max(Math.min(k, 4 - k, 1), 0);
-	hsv[0] = f(5) * 255;
-	hsv[1] = f(3) * 255;
-	hsv[2] = f(1) * 255;
+	hsv[0] = toByte(f(5) * 255);
+	hsv[1] = toByte(f(3) * 255);
+	hsv[2] = toByte(f(1) * 255);
 	return hsv;
 }
 
@@ -260,9 +271,10 @@ export function byteRgbToHsv(rgb: Uint8Array): Uint8Array {
 	const max = Math.max(r, g, b);
 	const min = Math.min(r, g, b);
 	const delta = max - min;
-	rgb[0] = Math.round((255 * (delta === 0 ? 0 : max === r ? (g - b) / delta + (g < b ? 6 : 0) : max === g ? (b - r) / delta + 2 : (r - g) / delta + 4)) / 6);
-	rgb[1] = max === 0 ? 0 : (delta * 255) / max;
-	rgb[2] = max * 255;
+	const h = delta === 0 ? 0 : max === r ? (g - b) / delta + (g < b ? 6 : 0) : max === g ? (b - r) / delta + 2 : (r - g) / delta + 4;
+	rgb[0] = toByte((255 * h) / 6);
+	rgb[1] = toByte(max === 0 ? 0 : (delta * 255) / max);
+	rgb[2] = toByte(max * 255);
 	return rgb;
 }
 

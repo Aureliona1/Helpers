@@ -6,11 +6,9 @@ import { clog } from "./process.ts";
 
 /**
  * Access and modify a cache file.
+ * Every read goes to the file, so changes made through other Cache instances (or other processes) are always seen.
  */
 export class Cache {
-	private memory: Record<string, any> = {};
-	// Whether the disk cache has been modified.
-	private dirty = true;
 	/**
 	 * Create an empty cache if absent.
 	 */
@@ -83,22 +81,14 @@ export class Cache {
 	 * @param entry The name to read, returns undefined if this name doesn't exist in the cache.
 	 */
 	async read<T>(entry: string): Promise<T> {
-		if (this.dirty) {
-			this.memory = await this.readFile();
-			this.dirty = false;
-		}
-		return this.memory[entry];
+		return (await this.readFile())[entry];
 	}
 	/**
 	 * Read the value at a name in the cache.
 	 * @param entry The name to read, returns undefined if this name doesn't exist in the cache.
 	 */
 	readSync<T>(entry: string): T {
-		if (this.dirty) {
-			this.memory = this.readFileSync();
-			this.dirty = false;
-		}
-		return this.memory[entry];
+		return this.readFileSync()[entry];
 	}
 	/**
 	 * Write an entry into the cache. If the data param is undefined, it will delete the entry with the given name.
@@ -114,7 +104,6 @@ export class Cache {
 		}
 		try {
 			await Deno.writeTextFile(this.fileName, JSON.stringify(cache));
-			this.dirty = true;
 		} catch (e) {
 			clog("Error writing cache file, check your write permissions...", "Error", "Cache");
 			clog(e, "Error", "Cache");
@@ -122,7 +111,7 @@ export class Cache {
 	}
 	/**
 	 * Write an entry into the cache. If the data param is undefined, it will delete the entry with the given name.
-	 * @param name The name of the entry to overwrite.
+	 * @param entry The name of the entry to overwrite.
 	 * @param data The data to overwrite with.
 	 */
 	writeSync(entry: string, data?: any) {
@@ -134,32 +123,31 @@ export class Cache {
 		}
 		try {
 			Deno.writeTextFileSync(this.fileName, JSON.stringify(cache));
-			this.dirty = true;
 		} catch (e) {
 			clog("Error writing cache file, check your write permissions...", "Error", "Cache");
 			clog(e, "Error", "Cache");
 		}
 	}
 	/**
-	 * Clear all entries in the cache.
+	 * Clear all entries in the cache. Clearing a cache that has no file yet does nothing.
 	 */
 	async clear() {
 		try {
 			await Deno.remove(this.fileName);
-			this.dirty = true;
 		} catch (e) {
+			if (e instanceof Deno.errors.NotFound) return;
 			clog("Error clearing cache, check your write permissions...", "Error", "Cache");
 			clog(e, "Error", "Cache");
 		}
 	}
 	/**
-	 * Clear all entries in the cache.
+	 * Clear all entries in the cache. Clearing a cache that has no file yet does nothing.
 	 */
 	clearSync() {
 		try {
 			Deno.removeSync(this.fileName);
-			this.dirty = true;
 		} catch (e) {
+			if (e instanceof Deno.errors.NotFound) return;
 			clog("Error clearing cache, check your write permissions...", "Error", "Cache");
 			clog(e, "Error", "Cache");
 		}
@@ -208,40 +196,47 @@ export class Cache {
  * ```ts
  * const addCache = new MemoryCache();
  * function slowAdd(a: number, b: number): number {
- * 	return addCache.ensure("result", [a, b], () => {
- * 		// Actual function implementation here.
- * 		sleepSync(10000);
- * 		return a + b;
- * 	},
+ * 	return addCache.ensure(
+ * 		"result",
+ * 		[a, b],
+ * 		() => {
+ * 			// Actual function implementation here.
+ * 			sleepSync(10000);
+ * 			return a + b;
+ * 		},
  * 		// If the same arguments, or their reverse, are passed in.
- * 		(old, new) => compare(old, new) || compare(old.reverse(), new)
+ * 		(cached, next) => compare(cached, next) || compare(cached.toReversed(), next)
  * 	);
  * }
  * ```
  */
 export class MemoryCache {
-	private _store: Record<string, { signature: any; data: any }> = {};
+	private _store: Map<string, { signature: any; data: any }> = new Map();
 
 	/**
 	 * Read the cached data for an entry name, ignoring signature.
-	 * @param entry The entry to read.
+	 * @param entry The entry to read. Logs a warning and returns undefined if it doesn't exist.
 	 */
 	readData<T>(entry = ""): T {
-		if (!(entry in this._store)) {
+		const item = this._store.get(entry);
+		if (item === undefined) {
 			clog(`${entry} does not exist in the cache, undefined will be returned...`, "Warning", "Memory Cache");
+			return undefined as T;
 		}
-		return this._store[entry].data as T;
+		return item.data as T;
 	}
 
 	/**
 	 * Read the cached signature for an entry name, ignoring the data.
-	 * @param entry The entry to read.
+	 * @param entry The entry to read. Logs a warning and returns undefined if it doesn't exist.
 	 */
 	readSignature<T>(entry = ""): T {
-		if (!(entry in this._store)) {
+		const item = this._store.get(entry);
+		if (item === undefined) {
 			clog(`${entry} does not exist in the cache, undefined will be returned...`, "Warning", "Memory Cache");
+			return undefined as T;
 		}
-		return this._store[entry].signature as T;
+		return item.signature as T;
 	}
 
 	/**
@@ -251,7 +246,7 @@ export class MemoryCache {
 	 * @param data The data to cache.
 	 */
 	write(entry = "", signature: any, data: any) {
-		this._store[entry] = { signature, data };
+		this._store.set(entry, { signature, data });
 	}
 
 	/**
@@ -259,28 +254,28 @@ export class MemoryCache {
 	 * @param entry The entry to delete.
 	 */
 	delete(entry = "") {
-		delete this._store[entry];
+		this._store.delete(entry);
 	}
 
 	/**
 	 * Get a list of the named entries in the cache.
 	 */
 	get entries(): string[] {
-		return Object.keys(this._store);
+		return [...this._store.keys()];
 	}
 
 	/**
 	 * Get a list of the named entries and their signatures in the cache.
 	 */
 	get signatures(): [string, any][] {
-		return Object.entries(this._store).map(x => [x[0], x[1].signature]);
+		return [...this._store].map(([name, item]) => [name, item.signature]);
 	}
 
 	/**
 	 * Clear the cache.
 	 */
 	clear() {
-		this._store = {};
+		this._store.clear();
 	}
 
 	/**
@@ -291,10 +286,9 @@ export class MemoryCache {
 	 * @param compareFunc A custom function to use to compare the old signature with the new one.
 	 */
 	ensure<T, S>(entry = "", signature: S, generator: () => T, compareFunc: (cachedSignature: S, newSignature: S) => boolean = (a, b) => compare(a, b)): T {
-		if (entry in this._store) {
-			if (compareFunc(this.readSignature<S>(entry), signature)) {
-				return this.readData<T>(entry);
-			}
+		const cached = this._store.get(entry);
+		if (cached !== undefined && compareFunc(cached.signature, signature)) {
+			return cached.data;
 		}
 		const data = generator();
 		this.write(entry, signature, data);

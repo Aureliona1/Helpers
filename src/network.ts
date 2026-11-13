@@ -37,7 +37,11 @@ export class FetchQueue {
 	 */
 	waitTurn(priority = 5): Promise<() => void> {
 		return new Promise(resolve => {
+			let released = false;
 			const unlock = () => {
+				// Releasing more than once must not free extra slots.
+				if (released) return;
+				released = true;
 				this.active--;
 				this.lastReleaseTime = Date.now();
 				this.next();
@@ -151,6 +155,7 @@ export class QueuedResponse {
 	 * It should not be declared separately from a FetchQueue.
 	 * @param res The raw fetch response.
 	 * @param queue The source queue. All methods on this class will be run through the queue.
+	 * @param bodyBlob The buffered body, if the source queue buffers bodies.
 	 */
 	constructor(
 		private res: Response,
@@ -164,7 +169,8 @@ export class QueuedResponse {
 		this.statusText = res.statusText;
 		this.type = res.type;
 		this.url = res.url;
-		this.body = res.body;
+		// A buffered response has already read res.body, so stream from the buffer instead.
+		this.body = bodyBlob ? bodyBlob.stream() : res.body;
 	}
 
 	/**
@@ -217,9 +223,13 @@ export class QueuedResponse {
 
 	/**
 	 * Get response body as FormData.
-	 * This will be added to the fetch queue with a high priority, this may result in stream failures if the queue is under heavy load.
+	 * This will be added to the fetch queue with a high priority if bufferBody is set to false in the source fetch queue, this may result in stream failures if the queue is under heavy load.
 	 */
 	async formData(): Promise<FormData> {
+		if (this.bodyBlob) {
+			// Rebuild a response from the buffer so the content type (and multipart boundary) is kept.
+			return await new Response(this.bodyBlob, { headers: this.headers }).formData();
+		}
 		const free = await this.queue.waitTurn(3);
 		try {
 			return await this.res.formData();

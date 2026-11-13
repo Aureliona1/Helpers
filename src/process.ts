@@ -4,6 +4,19 @@ import { ArrOp } from "./object/array.ts";
 import { clogString, progressString, resetLineString, rgb } from "./string.ts";
 
 /**
+ * Build the progress line logged after an iteration completes.
+ * @param completed The number of iterations completed so far.
+ * @param rep The total number of iterations.
+ * @param startTime When the repeat started (ms).
+ * @param source The source of the log.
+ */
+function progressUpdate(completed: number, rep: number, startTime: number, source?: string): string {
+	const elapsed = Date.now() - startTime;
+	const remaining = Math.round((elapsed * (rep - completed)) / completed);
+	return resetLineString + progressString(elapsed, remaining, decimals((completed * 100) / rep, 0), source);
+}
+
+/**
  * Repeat code a certain number of times, logging the progress for each iteration.
  * @param rep The number of times to repeat.
  * @param c The code to execute on each iteration.
@@ -16,10 +29,9 @@ export function progressRepeatSync(rep: number, c: (i: number) => void, logTimeo
 	console.log(progressString(0, NaN, 0, source));
 	for (let i = 0; i < rep; i++) {
 		c(i);
-		if (Date.now() - lastLogAt > logTimeout && i > 0) {
-			lastLogAt = startTime;
-			const elapsed = Date.now() - startTime;
-			console.log(resetLineString + progressString(elapsed, Math.round((rep * elapsed) / i - elapsed), decimals((i * 100) / rep, 0), source));
+		if (Date.now() - lastLogAt > logTimeout) {
+			lastLogAt = Date.now();
+			console.log(progressUpdate(i + 1, rep, startTime, source));
 		}
 	}
 	console.log(resetLineString + progressString(Date.now() - startTime, 0, 100, source));
@@ -38,15 +50,14 @@ export async function progressRepeat(rep: number, c: (i: number) => Promise<void
 	console.log(progressString(0, NaN, 0, source));
 	for (let i = 0; i < rep; i++) {
 		await c(i);
-		if (Date.now() - lastLogAt > logTimeout && i > 0) {
-			lastLogAt = startTime;
-
-			const elapsed = Date.now() - startTime;
-			console.log(resetLineString + progressString(elapsed, Math.round((rep * elapsed) / i - elapsed), decimals((i * 100) / rep, 0), source));
+		if (Date.now() - lastLogAt > logTimeout) {
+			lastLogAt = Date.now();
+			console.log(progressUpdate(i + 1, rep, startTime, source));
 		}
 	}
 	console.log(resetLineString + progressString(Date.now() - startTime, 0, 100, source));
 }
+
 /**
  * User input validation using regex.
  * @param msg The input message to display (auto-adds a space at the end).
@@ -56,36 +67,48 @@ export async function progressRepeat(rep: number, c: (i: number) => Promise<void
  * @param errorMsg The message to display if the user input is invalid.
  * @param defaultValue The value to return if the user doesn't enter anything (Default - "").
  * @returns string - User input.
+ * @throws If there is no interactive input (e.g., stdin isn't a terminal) and the default value doesn't match the pattern.
  */
 export function regexInput(msg: string, pattern: RegExp, errorMsg = "Invalid input, please try again...", defaultValue = ""): string {
-	let input = "";
-	for (let i = 0; !pattern.test(input); i++) {
+	// Global and sticky patterns keep a position between tests, so always test from the start.
+	const matches = (input: string) => {
+		pattern.lastIndex = 0;
+		return pattern.test(input);
+	};
+	for (let i = 0; ; i++) {
 		if (i !== 0) {
 			console.log(errorMsg);
 		}
-		input = prompt(msg) ?? defaultValue;
+		const answer = prompt(msg, defaultValue || undefined);
+		if (answer === null) {
+			// No interactive input, so asking again would loop forever.
+			if (matches(defaultValue)) return defaultValue;
+			throw new Error(`No input available for "${msg}", and the default value doesn't match the pattern.`);
+		}
+		const input = answer === "" ? defaultValue : answer;
+		if (matches(input)) return input;
 	}
-	return input;
 }
 
 /**
  * Interpret an array of arguments and return them as an object.
  * @param args The arguments to parse.
- * @param expectedOptions The expected options format. For any boolean options, set them to false here, they can then be defined with flags. Any arguments not defined here will be ignored.
+ * @param expectedOptions The expected options format. For any boolean options, set them to false here, they can then be defined with flags. Any arguments not defined here will be ignored. This object is not modified.
  */
 export function interpretArgs<T extends Record<string, string | boolean>>(args: string[] = [], expectedOptions: T): T {
+	const options: Record<string, string | boolean> = { ...expectedOptions };
 	args.forEach((x, i, a) => {
-		if (expectedOptions[x] != undefined) {
+		if (Object.hasOwn(options, x)) {
 			// Check for boolean param, therefore this can be treated as a single arg
-			if (typeof expectedOptions[x] == "boolean") {
-				(expectedOptions[x] as boolean) = true;
+			if (typeof options[x] == "boolean") {
+				options[x] = true;
 			} else if (/^-/.test(x) && a[i + 1]) {
 				// Treat as param arg (e.g., "-dir", "C:\users")
-				(expectedOptions[x] as string) = a[i + 1];
+				options[x] = a[i + 1];
 			}
 		}
 	});
-	return expectedOptions;
+	return options as T;
 }
 
 /**
@@ -109,6 +132,7 @@ export function fpsRepeat(rep: number, fps: number, c: (i: number) => void) {
  * @param error The type of message (Default - Log).
  * @param source The source of the log, this may be the function that the log was called in, or the process/application.
  */
+// deno-lint-ignore no-explicit-any
 export function clog(msg: any, error: "Log" | "Warning" | "Error" = "Log", source = "main") {
 	switch (error) {
 		case "Log":
@@ -131,21 +155,24 @@ export function clog(msg: any, error: "Log" | "Warning" | "Error" = "Log", sourc
 export function graphValues(values: number[], sampleCount: number = Deno.consoleSize().rows, sampleMethod: "Nearest" | "Floor" | "Interpolate" = "Interpolate"): void {
 	const max = new ArrOp(values).max;
 	const width = Deno.consoleSize().columns;
-	for (let i = 0; i < sampleCount; i++) {
-		const position = (i / sampleCount) * values.length;
+	const sample = (position: number): number => {
 		switch (sampleMethod) {
-			case "Nearest": {
-				console.log(rgb(255, 255, 255, true) + " ".repeat((values[clamp(Math.round(position), 0, values.length - 1)] * width) / max) + "\x1b[0m");
-			}
-			case "Floor": {
-				console.log(rgb(255, 255, 255, true) + " ".repeat((values[Math.floor(position)] * width) / max) + "\x1b[0m");
-			}
+			case "Nearest":
+				return values[clamp(Math.round(position), 0, values.length - 1)];
+			case "Floor":
+				return values[Math.floor(position)];
 			case "Interpolate": {
 				const upperI = clamp(Math.ceil(position), 0, values.length - 1);
 				const lowerI = Math.floor(position);
-				console.log(rgb(255, 255, 255, true) + " ".repeat((lerp(values[upperI], values[lowerI], mapRange(position, [lowerI, upperI], [0, 1])) * width) / max) + "\x1b[0m");
+				return lerp(values[lowerI], values[upperI], mapRange(position, [lowerI, upperI], [0, 1]));
 			}
 		}
+	};
+	for (let i = 0; i < sampleCount; i++) {
+		const position = (i / sampleCount) * values.length;
+		// Negative values can't be drawn as a bar, so they show as empty.
+		const length = Math.max(0, (sample(position) * width) / max) || 0;
+		console.log(rgb(255, 255, 255, true) + " ".repeat(length) + "\x1b[0m");
 	}
 }
 

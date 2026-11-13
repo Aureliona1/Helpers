@@ -13,8 +13,12 @@ import { clog } from "./process.ts";
  */
 export function pathAccessibleSync(path: string): boolean {
 	try {
-		const fd = Deno.openSync(path);
-		fd.close();
+		if (Deno.statSync(path).isDirectory) {
+			// Opening a directory as a file fails on Windows, so check that it can be listed instead.
+			for (const _ of Deno.readDirSync(path)) break;
+		} else {
+			Deno.openSync(path).close();
+		}
 		return true;
 	} catch {
 		return false;
@@ -34,8 +38,12 @@ export function pathAccessibleSync(path: string): boolean {
  */
 export async function pathAccessible(path: string): Promise<boolean> {
 	try {
-		const fd = await Deno.open(path);
-		fd.close();
+		if ((await Deno.stat(path)).isDirectory) {
+			// Opening a directory as a file fails on Windows, so check that it can be listed instead.
+			for await (const _ of Deno.readDir(path)) break;
+		} else {
+			(await Deno.open(path)).close();
+		}
 		return true;
 	} catch {
 		return false;
@@ -43,7 +51,8 @@ export async function pathAccessible(path: string): Promise<boolean> {
 }
 
 /**
- * Ensures that a dir exists.
+ * Ensures that a dir exists. Logs an error if a file is already at the path.
+ * @param paths The directory paths to ensure.
  */
 export function ensureDirSync(...paths: string[]) {
 	for (const raw of paths) {
@@ -53,13 +62,16 @@ export function ensureDirSync(...paths: string[]) {
 		} catch (e) {
 			if (!(e instanceof Deno.errors.AlreadyExists)) {
 				clog(e, "Error", "ensureDir");
+			} else if (!Deno.statSync(path).isDirectory) {
+				clog(`${path} already exists and is not a directory...`, "Error", "ensureDir");
 			}
 		}
 	}
 }
 
 /**
- * Ensures that a dir exists.
+ * Ensures that a dir exists. Logs an error if a file is already at the path.
+ * @param paths The directory paths to ensure.
  */
 export async function ensureDir(...paths: string[]) {
 	for (const raw of paths) {
@@ -69,6 +81,8 @@ export async function ensureDir(...paths: string[]) {
 		} catch (e) {
 			if (!(e instanceof Deno.errors.AlreadyExists)) {
 				clog(e, "Error", "ensureDir");
+			} else if (!(await Deno.stat(path)).isDirectory) {
+				clog(`${path} already exists and is not a directory...`, "Error", "ensureDir");
 			}
 		}
 	}

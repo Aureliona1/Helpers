@@ -11,15 +11,15 @@ export function msToTimeString(time: number): string {
 		s = 0,
 		m = 0,
 		h = 0;
-	if (time > 3600000) {
+	if (time >= 3600000) {
 		h = Math.floor(time / 3600000);
 		time -= 3600000 * h;
 	}
-	if (time > 60000) {
+	if (time >= 60000) {
 		m = Math.floor(time / 60000);
 		time -= 60000 * m;
 	}
-	if (time > 1000) {
+	if (time >= 1000) {
 		s = Math.floor(time / 1000);
 		time -= 1000 * s;
 	}
@@ -33,7 +33,7 @@ export function msToTimeString(time: number): string {
 /**
  * Generate a string that formats a count of bytes into a human readable unit.
  * @param bytes The number of bytes.
- * @param unit The unit to format the byte count to. This can also be set to an auto setting which with find teh largest byte from the binary or decimal unit sets that result in an output >= 1. (Default - "Auto Decimal Unit")
+ * @param unit The unit to format the byte count to. This can also be set to an auto setting, which will find the largest unit from the binary or decimal unit sets that results in an output >= 1. (Default - "Auto Decimal Unit")
  */
 export function bytesToString(bytes: number, unit: BinaryByteSizeUnit | DecByteSizeUnit | "Auto Binary Unit" | "Auto Decimal Unit" = "Auto Decimal Unit"): string {
 	const binaryUnits: Record<BinaryByteSizeUnit, number> = {
@@ -49,7 +49,8 @@ export function bytesToString(bytes: number, unit: BinaryByteSizeUnit | DecByteS
 	if (!(unit in binaryUnits) && !(unit in decUnits)) {
 		const orderedMappings = Object.entries(unit === "Auto Binary Unit" ? binaryUnits : decUnits).sort((a, b) => b[1] - a[1]);
 		let index = 0;
-		while (index < orderedMappings.length - 1 && bytes < orderedMappings[index][1]) index++;
+		// Pick the unit by size, so negative counts get the same unit as positive ones.
+		while (index < orderedMappings.length - 1 && Math.abs(bytes) < orderedMappings[index][1]) index++;
 		unit = orderedMappings[index][0] as BinaryByteSizeUnit | DecByteSizeUnit;
 	}
 	return `${rgb(255, 255, 0)}${decimals(bytes / Object.assign(decUnits, binaryUnits)[unit as BinaryByteSizeUnit | DecByteSizeUnit], 3)}${unit}\x1b[0m`;
@@ -95,13 +96,18 @@ export function clogString(errorLevel: "Log" | "Warning" | "Error" = "Log", sour
 }
 
 /**
+ * Round and clamp a colour channel into 0 - 255.
+ */
+const toChannel = (v: number): number => Math.min(255, Math.max(0, Math.round(v)));
+
+/**
  * Generates an RGB code to color all following text in the console. Reset this with \x1b[0m.
- * @param red The red value (0 - 255).
- * @param green The green value (0 - 255).
- * @param blue The blue value (0 - 255).
+ * @param red The red value (0 - 255, values outside this are clamped).
+ * @param green The green value (0 - 255, values outside this are clamped).
+ * @param blue The blue value (0 - 255, values outside this are clamped).
  * @param bg Whether to affect the foreground color or the background (Default - false).
  */
-export const rgb = (r: number, g: number, b: number, bg = false): string => "\x1b[" + (bg ? 48 : 38) + ";2;" + (Math.round(r) % 256) + ";" + (Math.round(g) % 256) + ";" + (Math.round(b) % 256) + "m";
+export const rgb = (r: number, g: number, b: number, bg = false): string => "\x1b[" + (bg ? 48 : 38) + ";2;" + toChannel(r) + ";" + toChannel(g) + ";" + toChannel(b) + "m";
 
 /**
  * A string containing the ANSI escape code to clear the previous line in the console.
@@ -119,5 +125,5 @@ let progressStringLogCount = 0;
 export function progressString(elapsed: number, remaining: number, percent: number, source?: string): string {
 	const el = msToTimeString(elapsed);
 	const rem = msToTimeString(remaining);
-	return `${clogString("Log", source)} [Elapsed: ${rgb(100, 150, 255) + el}\x1b[0m | est. remaining: ${rgb(100, 150, 255) + rem}\x1b[0m ] ${percent}% complete${".".repeat(progressStringLogCount % 4)}`;
+	return `${clogString("Log", source)} [Elapsed: ${rgb(100, 150, 255) + el}\x1b[0m | est. remaining: ${rgb(100, 150, 255) + rem}\x1b[0m ] ${percent}% complete${".".repeat(progressStringLogCount++ % 4)}`;
 }

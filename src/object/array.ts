@@ -6,16 +6,40 @@ import type { Easing, IntTypedArray, NumberArray, TypedArray, UintTypedArray, Wr
 import { compare } from "./object.ts";
 
 /**
+ * Create an empty array of the same kind as the source.
+ * Arrays and typed arrays keep their constructor, any other ArrayLike becomes a plain array.
+ * @param source The array to copy the type of.
+ * @param length The length of the new array.
+ */
+function emptyLike<V, T extends WritableArrayLike<V>>(source: WritableArrayLike<V>, length: number): T {
+	if (Array.isArray(source) || (ArrayBuffer.isView(source) && !(source instanceof DataView))) {
+		const Constructor = source.constructor as {
+			new (length: number): T;
+		};
+		return new Constructor(length);
+	}
+	return new Array(length) as unknown as T;
+}
+
+/**
  * Remove entries from an array and return the modified array. Affects the original array, therefore you do not need to reassign.
+ * Negative indices count from the end of the array. Duplicate and out-of-range indices are ignored.
  * @param arr The array to remove elements from.
  * @param indices The indices of the elements to remove.
  */
 export function arrRem<T extends any[]>(arr: T, indices: UintTypedArray | IntTypedArray | Array<number>): T {
-	indices = indices.toSorted((a, b) => a - b);
-	for (let i = indices.length - 1; i >= 0; i--) {
-		arr.splice(indices[i], 1);
+	const len = arr.length;
+	const valid = new Set<number>();
+	for (const index of indices) {
+		const i = index < 0 ? index + len : index;
+		if (Number.isInteger(i) && i >= 0 && i < len) valid.add(i);
 	}
-	return arr as T;
+	// Remove from the end first so earlier indices stay correct.
+	const descending = [...valid].sort((a, b) => b - a);
+	for (const i of descending) {
+		arr.splice(i, 1);
+	}
+	return arr;
 }
 
 /**
@@ -51,6 +75,7 @@ export class RandomArray {
 	}
 	/**
 	 * Ensures that no two numbers in the array are identical. This is the slowest method on this class. Please only use it if you must.
+	 * If the range and precision can't produce enough distinct numbers, the returned array will be shorter than `length`.
 	 * @param buffer The number of times to try for a unique number (prevents infinite repeats under certain circumstances).
 	 * @returns An array of random values.
 	 */
@@ -69,6 +94,7 @@ export class RandomArray {
 	}
 	/**
 	 * Ensures that no consecutive numbers are identical.
+	 * If no unique number is found within `buffer` attempts, the last attempt is used even if it repeats.
 	 * @param gap The number of indexes before allowing an identical number.
 	 * @param buffer The number of times to try for a unique number (prevents infinite repeats under certain circumstances).
 	 * @returns An array of random values.
@@ -82,14 +108,9 @@ export class RandomArray {
 		for (let i = 0; i < this.length; i++) {
 			let unique = false,
 				att = NaN;
-			for (let j = 0; j < buffer && !unique; j++) {
-				att = random(this.range[0], this.range[1], `${this.seed}blah${i}blah${j}`, this.decimals);
-				unique = true;
-				for (let j = 0; j < prev.length; j++) {
-					if (att == prev[j]) {
-						unique = false;
-					}
-				}
+			for (let attempt = 0; attempt < buffer && !unique; attempt++) {
+				att = random(this.range[0], this.range[1], `${this.seed}blah${i}blah${attempt}`, this.decimals);
+				unique = !prev.includes(att);
 			}
 			res.push(att);
 			prev.push(att);
@@ -102,6 +123,10 @@ export class RandomArray {
 /**
  * A utility class that provide several static and instanced methods for working with arrays.
  * All static methods do not mutate the source array/s.
+ *
+ * The arithmetic methods (add, subtract, multiply, divide, lerp) return the same type as the base array,
+ * so typed arrays keep their usual overflow and truncation, e.g. adding 100 to 200 in a Uint8Array gives 44.
+ * Pass a plain array or a Float64Array if you need exact results.
  */
 export class ArrOp<T extends NumberArray> {
 	/**
@@ -159,7 +184,7 @@ export class ArrOp<T extends NumberArray> {
 	/**
 	 * Linearly interpolate from the values of one array to another array, or a number. If you need to lerp from a number to an array, then reverse the time value (1 - 0 instead of  0 - 1).
 	 * @param from The array to lerp "from" (i.e., at fraction = 0).
-	 * @param to The array or number ot lerp "to" (i.e., at fraction = 1).
+	 * @param to The array or number to lerp "to" (i.e., at fraction = 1).
 	 * @param fraction The fraction of interpolation (0 - 1).
 	 * @param ease Optional easing to add to the lerp.
 	 */
@@ -172,27 +197,19 @@ export class ArrOp<T extends NumberArray> {
 	}
 
 	/**
-	 * Shuffle the elements of an array.
+	 * Shuffle the elements of an array (uniform Fisher-Yates shuffle).
 	 * @param arr The array to shuffle.
 	 * @param seed The seed for the shuffle (leave blank for random).
 	 */
-	static shuffle<V, T extends WritableArrayLike<V>>(arr: T, seed: number = Math.random()): T {
-		const Constructor = arr.constructor as {
-			new (length: number): T;
-		};
-		const out = new Constructor(arr.length);
+	static shuffle<V, T extends WritableArrayLike<V>>(arr: T, seed: number | string = Math.random()): T {
+		const out = emptyLike<V, T>(arr, arr.length);
 		for (let i = 0; i < out.length; i++) {
 			out[i] = arr[i];
 		}
-		if (out.length <= 1) return out;
-		const swap = (a: number, b: number) => {
-			[out[a], out[b]] = [out[b], out[a]];
-		};
-		let call = 0;
-		for (let i = 0; i < out.length; i++) {
-			let r = i;
-			while (r === i) r = random(0, out.length, seed + call++ * 2321 + 453, 0);
-			swap(i, r);
+		for (let i = out.length - 1; i > 0; i--) {
+			// Pick from 0 to i inclusive (max is exclusive in random).
+			const j = random(0, i + 1, `${seed}|${i}`, 0);
+			[out[i], out[j]] = [out[j], out[i]];
 		}
 		return out;
 	}
@@ -216,98 +233,91 @@ export class ArrOp<T extends NumberArray> {
 	/**
 	 * Get the total numeric range of the array. i.e., the distance between the greatest and least elements.
 	 * @param arr The array.
+	 * @returns The range, or NaN for an empty array.
 	 */
 	static range(arr: NumberArray): number {
-		return Math.max(...arr) - Math.min(...arr);
+		if (arr.length === 0) return NaN;
+		const op = new ArrOp(arr);
+		return op.max - op.min;
 	}
 
 	/**
 	 * Get the numeric average (mean) of the array.
 	 * @param arr The array to find the mean of.
+	 * @returns The mean, or NaN for an empty array.
 	 */
 	static mean(arr: NumberArray): number {
+		if (arr.length === 0) return NaN;
 		return ArrOp.sum(arr) / arr.length;
 	}
 
 	/**
-	 * Get the numeric median of the array.
+	 * Get the numeric median of the array. For even lengths this is the average of the two middle values.
 	 * @param arr The array to find the median of.
+	 * @returns The median, or NaN for an empty array.
 	 */
 	static median(arr: NumberArray): number {
-		return arr.toSorted((a, b) => a - b)[Math.floor(arr.length / 2)];
+		if (arr.length === 0) return NaN;
+		const sorted = arr.toSorted((a, b) => a - b);
+		const mid = Math.floor(arr.length / 2);
+		if (arr.length & 1) return sorted[mid];
+		return lerp(sorted[mid - 1], sorted[mid], 0.5);
 	}
 
 	/**
-	 * O(n) function to find the most common element in an array. This uses the string representation of each item, so may be error prone for complex objects.
+	 * O(n) function to find the most common value in an array.
+	 * If several values tie for the highest count, the one that reaches that count first is returned.
 	 * @param arr The array to find the mode of.
-	 * @returns A reference to the last instance of the mode of the array.
+	 * @returns The mode, or NaN for an empty array.
 	 */
-	static mode<T>(arr: WritableArrayLike<T>): T {
-		const ts = (e: T) => `${e}`;
-		const counts: Record<string, number> = {};
-		let maxIndex = 0;
+	static mode(arr: NumberArray): number {
+		if (arr.length === 0) return NaN;
+		const counts = new Map<number, number>();
+		let mode = arr[0];
 		let maxCount = 0;
 		for (let i = 0; i < arr.length; i++) {
-			const s = ts(arr[i]);
-			counts[s] ??= 0;
-			counts[s]++;
-			if (counts[s] > maxCount) {
-				maxCount = counts[s];
-				maxIndex = i;
+			const count = (counts.get(arr[i]) ?? 0) + 1;
+			counts.set(arr[i], count);
+			if (count > maxCount) {
+				maxCount = count;
+				mode = arr[i];
 			}
 		}
-		return arr[maxIndex];
-	}
-
-	/**
-	 * O(n^2) function to find the most common element in an array. This uses a comparator function to test equality.
-	 * @param arr The array to find the mode of.
-	 * @param comparator The comparator function. (Default - {@link compare compare(a, b)})
-	 * @returns A reference to the last instance of the mode of the array.
-	 */
-	static modeFull<T>(arr: ArrayLike<T>, comparator: (a: T, b: T) => boolean = compare): T {
-		const countElement = (e: T) => {
-			let count = 0;
-			for (let i = 0; i < arr.length; i++) if (comparator(arr[i], e)) count++;
-			return count;
-		};
-		if (arr.length === 0) return arr[0];
-		let count = countElement(arr[0]);
-		let item = arr[0];
-		for (let i = 1; i < arr.length; i++) {
-			const thisCount = countElement(arr[i]);
-			if (thisCount > count) {
-				count = thisCount;
-				item = arr[i];
-			}
-		}
-		return item;
+		return mode;
 	}
 
 	/**
 	 * Get the sum of all the elements in the array.
+	 * @returns The sum, or 0 for an empty array.
 	 */
 	static sum(arr: NumberArray): number {
-		return Array.from(arr).reduce((a, b) => a + b);
+		let total = 0;
+		for (let i = 0; i < arr.length; i++) total += arr[i];
+		return total;
 	}
 
 	/**
 	 * Get the product of all the elements in the array.
+	 * @returns The product, or 1 for an empty array.
 	 */
 	static product(arr: NumberArray): number {
-		return Array.from(arr).reduce((a, b) => a * b);
+		let total = 1;
+		for (let i = 0; i < arr.length; i++) total *= arr[i];
+		return total;
 	}
 
 	/**
 	 * Interleave multiple of the same type of array together.
 	 * If the length of the arrays differ, the longer arrays will be chopped to the length of the shortest one.
 	 * @param arrays The arrays to interleave.
+	 * @returns The interleaved array.
+	 * @throws If no arrays are given, since the output type can't be inferred.
 	 */
 	static interleave<V, T extends WritableArrayLike<V>>(...arrays: T[]): T {
-		const Constructor = arrays[0].constructor as {
-			new (length: number): T;
-		};
-		const output = new Constructor(Math.min(...arrays.map(x => x.length)) * arrays.length);
+		if (arrays.length === 0) throw new Error("Cannot infer array type from empty input...");
+		let shortest = arrays[0].length;
+		for (const a of arrays) shortest = Math.min(shortest, a.length);
+		const output = emptyLike<V, T>(arrays[0], shortest * arrays.length);
 		for (let i = 0; i < output.length; i++) {
 			output[i] = arrays[i % arrays.length][Math.floor(i / arrays.length)];
 		}
@@ -315,25 +325,21 @@ export class ArrOp<T extends NumberArray> {
 	}
 
 	/**
-	 * O(n) de-duplication function on any writeable ArrayLike. This function uses the string representation of the contents of the array, so it is much quicker than a full de-duplication, however it may be error prone for nested objects.
+	 * O(n) de-duplication function on any writeable ArrayLike. Keeps the first instance of each item.
+	 * Items are compared like a Set does: primitives by value (NaN equals NaN), objects by reference.
+	 * Use {@link ArrOp.deDuplicateFull} to treat structurally equal objects as duplicates.
 	 * @param array The array to de-duplicate.
 	 */
 	static deDuplicateLite<V, T extends WritableArrayLike<V>>(array: T): T {
-		const Constructor = array.constructor as {
-			new (length: number): T;
-		};
-		const rec: Record<string, boolean> = {};
-		for (let i = 0; i < array.length; i++) {
-			rec[`${array[i]}`] = true;
-		}
+		const seen = new Set<V>();
 		const unique: V[] = [];
 		for (let i = 0; i < array.length; i++) {
-			if (rec[`${array[i]}`]) {
+			if (!seen.has(array[i])) {
+				seen.add(array[i]);
 				unique.push(array[i]);
-				rec[`${array[i]}`] = false;
 			}
 		}
-		const output = new Constructor(unique.length);
+		const output = emptyLike<V, T>(array, unique.length);
 		for (let i = 0; i < unique.length; i++) {
 			output[i] = unique[i];
 		}
@@ -341,29 +347,26 @@ export class ArrOp<T extends NumberArray> {
 	}
 
 	/**
-	 * O(n^2) de-duplication function on any writable ArrayLike. The function will always return the last instance of a duplicate item in the array.
+	 * O(n^2) de-duplication function on any writable ArrayLike. Keeps the first instance of each item.
 	 * @param array The array to de-duplicate.
 	 * @param condition The condition to check for duplication. If this returns truthy value, then the value is considered a duplicate. (Default - {@link compare compare(a, b)})
 	 * @example
 	 * ```ts
-	 * ArrOp.deDuplicateFull([1, 2, 3, 4, 5, 4, 3, 2, 1]) // [5, 4, 3, 2, 1]
+	 * ArrOp.deDuplicateFull([1, 2, 3, 4, 5, 4, 3, 2, 1]) // [1, 2, 3, 4, 5]
 	 * ```
 	 */
-	static deDuplicateFull<V, T extends WritableArrayLike<V>>(array: WritableArrayLike<V>, condition: (a: V, b: V) => boolean = compare): T {
-		const Constructor = array.constructor as {
-			new (length: number): T;
-		};
-		const unique: V[] = [];
+	static deDuplicateFull<T extends WritableArrayLike<any>>(array: T, condition: (a: T[number], b: T[number]) => boolean = compare): T {
+		const unique: T[number][] = [];
 		for (let i = 0; i < array.length; i++) {
 			let duplicate = false;
-			for (let j = i + 1; j < array.length && !duplicate; j++) {
-				duplicate = condition(array[i], array[j]);
+			for (let j = 0; j < unique.length && !duplicate; j++) {
+				duplicate = !!condition(unique[j], array[i]);
 			}
 			if (!duplicate) {
 				unique.push(array[i]);
 			}
 		}
-		const output = new Constructor(unique.length);
+		const output = emptyLike<any, T>(array, unique.length);
 		for (let i = 0; i < unique.length; i++) {
 			output[i] = unique[i];
 		}
@@ -377,10 +380,10 @@ export class ArrOp<T extends NumberArray> {
 	constructor(public arr: T) {}
 
 	/**
-	 * Get the element with the greatest numerical value.
+	 * Get the element with the greatest numerical value, or NaN for an empty array.
 	 */
 	get max(): number {
-		if (!this.arr.length) return 0;
+		if (this.arr.length === 0) return NaN;
 		let m = this.arr[0];
 		for (let i = 1; i < this.arr.length; i++) {
 			if (this.arr[i] > m) m = this.arr[i];
@@ -389,10 +392,10 @@ export class ArrOp<T extends NumberArray> {
 	}
 
 	/**
-	 * Get the element in the array with the least numerical value.
+	 * Get the element in the array with the least numerical value, or NaN for an empty array.
 	 */
 	get min(): number {
-		if (!this.arr.length) return 0;
+		if (this.arr.length === 0) return NaN;
 		let m = this.arr[0];
 		for (let i = 1; i < this.arr.length; i++) {
 			if (this.arr[i] < m) m = this.arr[i];
@@ -404,7 +407,7 @@ export class ArrOp<T extends NumberArray> {
 	 * Get the numerical distance between the least and greatest element in the array.
 	 */
 	get range(): number {
-		return this.max - this.min;
+		return ArrOp.range(this.arr);
 	}
 
 	/**
@@ -418,14 +421,14 @@ export class ArrOp<T extends NumberArray> {
 	 * Get the median value of the array.
 	 */
 	get median(): number {
-		return ArrOp.sortAscending(this.arr)[Math.floor(this.arr.length / 2)];
+		return ArrOp.median(this.arr);
 	}
 
 	/**
 	 * Get the most common value (mode) of the array.
 	 */
 	get mode(): number {
-		return ArrOp.modeFull(this.arr);
+		return ArrOp.mode(this.arr);
 	}
 
 	/**
@@ -448,7 +451,7 @@ export class ArrOp<T extends NumberArray> {
  * @param arrays The list of arrays to concatenate.
  */
 export function concatTypedArrays<T extends TypedArray>(...arrays: T[]): T {
-	if (!arrays.length) throw new Error("Cannot infer array type from empty input...");
+	if (arrays.length === 0) throw new Error("Cannot infer array type from empty input...");
 	const newLength = arrays.reduce((sum, b) => sum + b.length, 0);
 	const Constructor = arrays[0].constructor as {
 		new (length: number): T;
